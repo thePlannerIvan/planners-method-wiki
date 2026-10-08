@@ -1,0 +1,4 @@
+interface:
+  display_name: "Planners Method Wiki"
+  short_description: "查找和应用策略方法，审阅并收录可复用方法"
+  default_prompt: "使用 $planners-method-wiki，根据当前问题检索并应用方法；需要维护时先形成完整变更提案，审阅后安装。"

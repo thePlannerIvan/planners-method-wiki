@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "method-change-set/1.0.0",
+  "title": "Method Wiki Change Set",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["contract_version", "route", "wiki_dir", "baseline_sha256", "source_index", "sources", "modules", "changes"],
+  "properties": {
+    "contract_version": {"const": "method-change-set/1.0.0"},
+    "route": {"enum": ["isolated_bootstrap", "upgrade_existing"]},
+    "wiki_dir": {"type": "string", "minLength": 1},
+    "baseline_sha256": {"type": ["string", "null"], "pattern": "^[a-f0-9]{64}$"},
+    "source_index": {"type": "string", "minLength": 1},
+    "sources": {
+      "type": "array",
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["source_module_instance_id", "source_id", "locator"],
+        "properties": {
+          "source_module_instance_id": {"type": "string", "pattern": "^mi_[a-f0-9]{24}$"},
+          "source_id": {"type": "string", "minLength": 1},
+          "locator": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "modules": {
+      "type": "array",
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["module_id", "title", "stable_decision", "unified_preconditions", "page_expression_options"],
+        "properties": {
+          "module_id": {"type": "string", "pattern": "^mod_[a-z0-9][a-z0-9-]{2,63}$"},
+          "title": {"type": "string", "minLength": 1},
+          "stable_decision": {"type": "string", "minLength": 1},
+          "unified_preconditions": {"type": "array", "items": {"type": "string", "minLength": 1}},
+          "page_expression_options": {"type": "array", "items": {"type": "object"}}
+        }
+      }
+    },
+    "changes": {
+      "type": "array",
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["change_id", "method_kind", "source_module_id", "object", "recommended_action", "target_id", "target_module_id", "comparison"],
+        "properties": {
+          "change_id": {"type": "string", "minLength": 1},
+          "method_kind": {"enum": ["lens", "recipe"]},
+          "source_module_id": {"type": ["string", "null"]},
+          "object": {"type": "object"},
+          "recommended_action": {"enum": ["new", "merge", "variant", "revision", "add_source", "reroute", "no_change"]},
+          "target_id": {"type": ["string", "null"]},
+          "target_module_id": {"type": ["string", "null"]},
+          "comparison": {"type": ["object", "null"]}
+        }
+      }
+    },
+    "notes": {"type": "string"}
+  }
+}

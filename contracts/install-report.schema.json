@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "method-install-report/1.0.0",
+  "type": "object",
+  "required": ["contract_version", "valid", "status", "approval_id", "wiki_dir", "review_bundle_sha256", "feedback_sha256", "baseline_sha256", "wiki_root_sha256", "touched_modules", "changes", "integrity"],
+  "properties": {
+    "contract_version": {"const": "method-install-report/1.0.0"},
+    "valid": {"const": true},
+    "status": {"enum": ["installed", "already_installed", "preflight_ok", "no_changes"]},
+    "approval_id": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "wiki_dir": {"type": "string", "minLength": 1},
+    "review_bundle_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "feedback_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "baseline_sha256": {"type": ["string", "null"], "pattern": "^[a-f0-9]{64}$"},
+    "wiki_root_sha256": {"type": ["string", "null"], "pattern": "^[a-f0-9]{64}$"},
+    "touched_modules": {"type": "array", "uniqueItems": true, "items": {"type": "string"}},
+    "changes": {"type": "array", "items": {"type": "object"}},
+    "integrity": {"type": "object", "required": ["valid", "errors", "counts"], "properties": {"valid": {"const": true}, "errors": {"type": "array", "maxItems": 0}, "counts": {"type": "object"}}}
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "name": "planners-method-wiki",
+  "version": "1.0.0",
+  "description": "可复用方法查询、应用与人工审阅维护",
+  "license": "AGPL-3.0-only",
+  "type": "module",
+  "scripts": {"test": "node evals/run-all.mjs", "test:query": "node evals/query.mjs", "test:review": "node evals/review.mjs", "test:install": "node evals/install.mjs"},
+  "repository": {"type": "git", "url": "git+https://github.com/thePlannerIvan/planners-method-wiki.git"}
+}
