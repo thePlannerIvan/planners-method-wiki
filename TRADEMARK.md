@@ -1,6 +1,6 @@
 # 商标与项目名称政策
 
-`Planners-Proposal-System`、`阿祖不看 TVC`及相关识别名称用于标识本项目及其来源。
+`Planners Method Wiki`、`planners-method-wiki`、`阿祖不看 TVC`及相关识别名称用于标识本项目及其来源。
 
 AGPL-3.0 许可覆盖本仓库中的代码和文档，但不授予以下权利：
 
@@ -11,7 +11,7 @@ AGPL-3.0 许可覆盖本仓库中的代码和文档，但不授予以下权利�
 
 允许的使用包括：
 
-- 如实说明软件源自或基于 Planners-Proposal-System；
+- 如实说明本项目拆自 Planners Proposal System 的方法库组件；
 - 在保留许可证和版权信息的前提下分发未修改版本；
 - 将修改版明确标记为 fork，并使用不会造成官方混淆的新名称。
 

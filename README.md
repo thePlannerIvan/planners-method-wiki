@@ -1,8 +1,24 @@
 # Planners Method Wiki
 
+[![License: AGPL-3.0-only](https://img.shields.io/badge/license-AGPL--3.0--only-blue.svg)](LICENSE)
+
 可复用的策略分析与论证方法库。Lens 解决一个问题，Recipe 组织方法之间的推导依赖，Module 提供分类。方法帮助理解与表达，项目事实和决定仍归项目本身。
 
-由阿祖不看 TVC 创建与维护。网站：demyth.info；邮箱：Lawyif@163.com。
+由阿祖不看 TVC 创建与维护。网站：[demyth.info](https://demyth.info)；邮箱：[Lawyif@163.com](mailto:Lawyif@163.com)。本项目从 Planners Proposal System 的方法库组件拆出，并保留原始署名与 AGPL-3.0-only 许可。
+
+## 安装
+
+```bash
+npx skills add https://github.com/thePlannerIvan/planners-method-wiki --skill planners-method-wiki
+```
+
+也可克隆到 Codex 或 Claude Code 的 Skill 目录：
+
+```bash
+git clone https://github.com/thePlannerIvan/planners-method-wiki.git ~/.codex/skills/planners-method-wiki
+# 或
+git clone https://github.com/thePlannerIvan/planners-method-wiki.git ~/.claude/skills/planners-method-wiki
+```
 
 ## 使用
 
@@ -32,4 +48,11 @@ node evals/run-all.mjs
 
 测试覆盖查询、来源、完整对象审阅、安装和内容交接；测试提交仅是夹具，不代表真实用户批准。效用需另外使用真实问题检验，格式与接口通过不等于方法已经证明有效。
 
-本项目从 Planners Proposal System 的方法库组件拆出，保留原始署名与 AGPL-3.0-only 许可证。见 [LICENSE](LICENSE)、[NOTICE](NOTICE) 和 [TRADEMARK.md](TRADEMARK.md)。
+## 开源与归属
+
+本仓库以 GNU Affero General Public License v3.0 only 发布。许可允许商业使用；复制、修改、分发或通过网络提供修改版服务时，须遵守许可证对源码提供等义务。代码和文档的许可不授予项目名称、作者名称或品牌背书权。基于本项目的修改版应保留来源并清楚标记修改或 fork，不得暗示官方关系。
+
+- [LICENSE](LICENSE)：完整许可证文本
+- [NOTICE](NOTICE)：作者、来源与署名要求
+- [TRADEMARK.md](TRADEMARK.md)：项目名称和品牌使用边界
+- [COMMERCIAL.md](COMMERCIAL.md)：商业服务与单独授权
