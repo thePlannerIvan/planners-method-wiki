@@ -1,57 +1,48 @@
 ---
 name: planners-method-wiki
-description: 检索并应用可复用的策略分析与论证方法，供 Proposal、Bypage 等内容流程调用；从方案或方法资料中提取、审阅并收录新方法时也使用。方法库提供方法，不提供当前项目的事实或答案。
+description: 检索、应用并维护 Markdown 版可复用策略方法库（Karpathy LLM Wiki）。供 Proposal、Bypage、Video Idea 等内容流程调取分析视角与页面表达结构，也用于从实战方案或方法资料中沉淀新方法。方法库只存通用方法，不提供当前项目的事实或答案。
 ---
 
 # Planners Method Wiki
 
-> 由阿祖不看 TVC 创建与维护。个人网站 [demyth.info](https://demyth.info)，联系邮箱 `Lawyif@163.com`。来源信息不默认写入客户交付物。
+> 由阿祖不看 TVC 创建与维护。个人网站 [demyth.info](https://demyth.info)，联系邮箱 `Lawyif@163.com`。
 
-## 目的与入口
+## 目标（OKR）
 
-Wiki 保存可以在适用范围内重复执行的方法：Lens 解决一个问题，Recipe 组织多个方法的推导依赖，Module 提供分类。页面表达建议描述论证角色，按项目材料调整。
+把策略洞察与「某一页怎么表达、先讲什么后讲什么」的知识沉淀为 **Karpathy LLM Wiki**（Markdown 真源），让 LLM 与人都能直接读写、检索、交叉引用，并生成单文件离线阅读页。
 
-- 查找或使用方法：执行下文的查询流程。
-- 提取、增补或修订方法库：读取 [维护流程](references/maintenance.md)。项目写作中发现新方法时先记录候选，收录由单独的维护任务完成。
+- **真源形态**：`<wiki_dir>/` 包含 `SCHEMA.md`、`index.md`、`log.md` 与 `lenses/<lens_id>.md`（默认自带 `<Skill>/base-wiki`，11 个模块、33 个基础方法、22 个变体）。
+- **铁律**：只存去项目化的思考框架、判断条件、失效边界与 `页面表达结构`；绝不替当前项目捏造事实结论或跳过 `planners-fact-check`。
 
-`<Skill>` 是当前 Wiki Skill 目录。按名称找到依赖 Skill；具体命令、输入输出和错误处理见 [工具接口](references/tools.md)，按当前动作读取对应小节，查询时只需「查询」。
+## 工具（3 个脚本，零 JSON 审阅中间层）
 
-## 1. 接续当前问题与方法库
+| 命令 | 用途 |
+|---|---|
+| `node "<Skill>/scripts/query-wiki.mjs" --query "<关键词>" [--wiki-dir <Wiki>] [--module <mod_id>] [--limit 5] [--text]` | 按中英文分词检索 `lenses/*.md`，返回匹配分数、原文绝对路径与页面表达摘要 |
+| `node "<Skill>/scripts/lint-wiki.mjs" [--wiki-dir <Wiki>] [--text]` | 校验 `SCHEMA.md`/`index.md`/`log.md`、`lenses/*.md` 的 frontmatter、7 个必填段落、断链与孤儿页（错误退出码 1，`页面表达结构` 待补充出 warn） |
+| `node "<Skill>/scripts/build-wiki-viewer.mjs" [--wiki-dir <Wiki>] [--output <wiki-viewer.html>]` | 将 Markdown Wiki 编译为单文件离线阅读页 `wiki-viewer.html` |
 
-读取调用方提供的当前问题、可用材料、希望改善的判断或表达，以及已有的方法采用记录。
+## 剧本（Playbook）
 
-`<Wiki>` 使用本次明确指定的方法库；未指定时沿用项目记忆中的库，再无记录时使用 `<Skill>/base-wiki`。指定库与项目记录不同且会改变已有方法时，说明差异并确认切换。指定库不可读时报告问题，不能静默换库。
+### 1. 查询与应用（Query）
 
-沿用调用方正在维护的 `project-memory.md`。独立查询且没有项目记忆时直接返回结果，不为一次查询建立项目文件。
+1. **确定目标库**：优先使用调用方指定的 `<Wiki>`；未指定时读 `<Skill>/base-wiki`。
+2. **两步定位**：先读 `<Wiki>/index.md` 概览模块，或运行 `query-wiki.mjs --query "..."` 找到候选 `lens_id`，再直接 `read_file` 打开对应 `lenses/<id>.md` 全文。
+3. **检查适配度**：核对 `适用条件 / 跳过条件 / 所需输入 / 分析操作步骤 / 页面表达结构 / 失效模式`。缺失输入时向调用方提出补证需求，不把方法假设当项目事实。
+4. **交接下游**：
+   - **Proposal**：采用分析视角检验主线判断，必要时记录采用了哪个 `lens_id`。
+   - **Bypage**：重点读取 `## 页面表达结构`，把该方法对应的页面信息排布转化为可编程 PPT 页面的块结构。
 
-## 2. 检索并阅读方法
+### 2. 沉淀与维护（Ingest）
 
-用当前问题中的方法名称、判断关系、输入或输出关键词检索 Lens；需要组织连续推导时同时检索 Recipe。命令见工具接口的「查询」。
+从优秀方案、结案或外部方法资料沉淀新知识时，按 `<Wiki>/SCHEMA.md` 直接编辑 Markdown：
 
-检索结果是候选。打开相关对象全文，检查适用条件、所需输入、操作、输出、跳过条件与局限；采用 Recipe 前读其实际使用的 Lens，并检查步骤间输入输出依赖。
+1. **先读规范与现状**：读 `<Wiki>/SCHEMA.md`、`<Wiki>/index.md` 与 `<Wiki>/log.md` 末尾，确认是否已有同类方法或应新增变体。
+2. **去项目化抽象**：剔除品牌名、预算数字与当期结论，只保留通用问题、判断条件、操作步骤与 **`## 页面表达结构`**（`P1 · ...` 的论证目的/回答问题/所需证据）。
+3. **写页与建链**：新建或修订 `<Wiki>/lenses/<lens_id>.md`（新方法默认 `status: draft`），同步更新 `<Wiki>/index.md` 的对应模块列表，并在 `<Wiki>/log.md` 顶部/尾部追加一条日期记录（含变更说明与来源说明）。
+4. **Lint 与交付阅读页**：运行 `lint-wiki.mjs --wiki-dir <Wiki> --text`（零 error）与 `build-wiki-viewer.mjs --wiki-dir <Wiki>`，用浏览器打开 `wiki-viewer.html` 供用户审阅确认后再将 `draft` 改为 `approved`。
 
-零结果时可调整关键词或浏览相关 Module。检索失败与正常零结果分别处理；相关范围仍没有适用方法时，返回这个边界，调用方继续依据项目材料推进。
+## 注意事项
 
-## 3. 应用与交接
-
-比较方法要求与项目现有材料，说明它补充了什么观察、检验、取舍或论证关系。所需输入缺失时，提出具体补证需要或保留待验证判断；方法本身不充当项目证据。
-
-向调用方返回采用的 Lens / Recipe ID、库路径与版本标识、全文定位、适用理由、实际应用或预期改变，以及未满足的条件。候选与已采用的方法分开说明。
-
-调用方把采用的方法及实际改变简要更新到同一份项目记忆，不保存整份查询日志。下游先承接已有记录，遇到新问题再检索；库版本变化时检查已采用对象是否变化，不能把新版本视为旧判断已经重新验证。
-
-## 调用方分工
-
-| 调用方 | Wiki 的作用 | 继续由调用方负责 |
-|---|---|---|
-| Proposal | 检查解释角度、关键判断与主线推导 | 项目理解、商业选择、Storyline 与结构批准 |
-| Bypage | 承接已采用方法，补充新的论证或页面组织 | 完整内容、素材、事实核查与终稿审阅 |
-| PPT Hell | 需要时参考表达建议，承接既有论证关系 | 制作与画面验证；内容变更返回正式内容稿 |
-
-查询不新建或复制项目来源索引。方法需要新资料时，由当前项目阶段更新原 `source-index.json`。Wiki 中的历史案例事实只有回到可用原始来源、符合当前项目范围时，才能成为项目证据。
-
-写作产生的项目事实仍进入 `planners-fact-check` 的原有核查流程；沿用原核查员和核查记录，Wiki 查询不另起一次核查。内容审阅继续使用调用方现有的 `planners-review-core` 接口。
-
-## 完成
-
-查询完成是：调用方拿到已读、可定位且说明适用边界的方法及应用判断，或明确知道没有适用方法。维护完成以维护流程中的安装、溯源和效用验证结果为准。
+- **不要手写或修改 JSON 索引**：旧版 `wiki-index.json` / `modules/*.json` / 审阅变更集协议已退役，`index.md` 与 `lenses/*.md` 是唯一真源。
+- **`build-wiki-viewer.mjs` 只读 `assets/viewer.{css,js}`** 嵌入离线 HTML，不产生网络外链。

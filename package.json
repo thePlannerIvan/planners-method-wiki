@@ -1,9 +1,16 @@
 {
   "name": "planners-method-wiki",
-  "version": "1.0.0",
-  "description": "可复用方法查询、应用与人工审阅维护",
+  "version": "2.0.0",
+  "description": "Karpathy LLM Wiki (Markdown) 策略方法库：检索、静态校验与离线阅读页构建",
   "license": "AGPL-3.0-only",
   "type": "module",
-  "scripts": {"test": "node evals/run-all.mjs", "test:query": "node evals/query.mjs", "test:review": "node evals/review.mjs", "test:install": "node evals/install.mjs"},
-  "repository": {"type": "git", "url": "git+https://github.com/thePlannerIvan/planners-method-wiki.git"}
+  "scripts": {
+    "test": "node evals/run-all.mjs",
+    "lint:wiki": "node scripts/lint-wiki.mjs --text",
+    "build:viewer": "node scripts/build-wiki-viewer.mjs"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/thePlannerIvan/planners-method-wiki.git"
+  }
 }

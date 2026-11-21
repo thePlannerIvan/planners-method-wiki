@@ -1,0 +1,3853 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>策略方法库 · Planners Method Wiki</title>
+<meta name="description" content="Karpathy LLM Wiki 策略方法库：11 个模块、33 个方法。">
+<style>
+/* ============================================================
+   Planners Method Wiki — 阅读器样式
+   档案 / 索引卡片风格：纸面、墨色、朱砂单点强调
+   ============================================================ */
+
+:root {
+  --paper: #f6f1e6;
+  --paper-warm: #efe7d6;
+  --paper-raised: #fbf8f1;
+  --ink: #1b1813;
+  --ink-soft: #423c32;
+  --muted: #7c7463;
+  --rule: #ddd3bf;
+  --rule-strong: #c6b9a0;
+  --accent: #9e3223;
+  --accent-soft: #ecd9cd;
+  --serif: "Songti SC", "STSong", "Source Han Serif SC", "Noto Serif CJK SC",
+    "Songti TC", Georgia, serif;
+  --sans: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", system-ui,
+    -apple-system, sans-serif;
+  --mono: "SFMono-Regular", ui-monospace, Menlo, Consolas, "Courier New",
+    monospace;
+  --rail-w: 276px;
+  --ease: cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 96px;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background-color: var(--paper);
+  background-image:
+    radial-gradient(1200px 600px at 82% -8%, rgba(158, 50, 35, 0.055), transparent 60%),
+    radial-gradient(900px 520px at -10% 8%, rgba(120, 104, 70, 0.07), transparent 65%),
+    linear-gradient(var(--paper), var(--paper));
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 15px;
+  line-height: 1.7;
+  letter-spacing: 0.01em;
+  overflow-x: hidden;
+}
+
+/* 纸面颗粒 */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.5;
+  mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.82' numOctaves='3' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='180' height='180' filter='url(%23n)' opacity='0.09'/></svg>");
+}
+
+a {
+  color: inherit;
+}
+
+::selection {
+  background: var(--accent);
+  color: var(--paper-raised);
+}
+
+/* ---------------- 顶栏 ---------------- */
+
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 14px 32px 13px;
+  border-bottom: 1px solid var(--rule);
+  background: rgba(246, 241, 230, 0.88);
+  backdrop-filter: blur(14px) saturate(1.1);
+}
+
+.brand {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex: none;
+}
+
+.brand-kicker {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.brand-name {
+  font-family: var(--serif);
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.search-wrap {
+  position: relative;
+  flex: 1 1 auto;
+  max-width: 520px;
+  margin-left: auto;
+}
+
+.search {
+  width: 100%;
+  padding: 9px 84px 9px 36px;
+  border: 1px solid var(--rule-strong);
+  border-radius: 2px;
+  background: var(--paper-raised);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 13.5px;
+  outline: none;
+  transition: border-color 160ms var(--ease), box-shadow 160ms var(--ease);
+}
+
+.search::placeholder {
+  color: var(--muted);
+}
+
+.search:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(158, 50, 35, 0.09);
+}
+
+.search-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  translate: 0 -50%;
+  width: 14px;
+  height: 14px;
+  color: var(--muted);
+  pointer-events: none;
+}
+
+.search-kbd {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  translate: 0 -50%;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  border: 1px solid var(--rule);
+  border-radius: 2px;
+  padding: 1px 5px;
+  background: var(--paper);
+  pointer-events: none;
+}
+
+.search-wrap.has-value .search-kbd {
+  display: none;
+}
+
+.search-count {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  translate: 0 -50%;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
+  color: var(--accent);
+  display: none;
+}
+
+.search-wrap.has-value .search-count {
+  display: block;
+}
+
+.toolgroup {
+  display: flex;
+  gap: 6px;
+  flex: none;
+}
+
+.toolbtn {
+  appearance: none;
+  border: 1px solid var(--rule-strong);
+  background: transparent;
+  color: var(--ink-soft);
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 7px 11px;
+  border-radius: 2px;
+  cursor: pointer;
+  transition: background 150ms var(--ease), color 150ms var(--ease),
+    border-color 150ms var(--ease);
+  white-space: nowrap;
+}
+
+.toolbtn:hover {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--paper);
+}
+
+.toolbtn[aria-pressed="true"] {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--paper-raised);
+}
+
+/* ---------------- 布局 ---------------- */
+
+.shell {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: var(--rail-w) minmax(0, 1fr);
+  align-items: start;
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 0 32px;
+}
+
+.rail {
+  position: sticky;
+  top: 61px;
+  height: calc(100vh - 61px);
+  overflow-y: auto;
+  padding: 34px 26px 40px 2px;
+  border-right: 1px solid var(--rule);
+  scrollbar-width: thin;
+  scrollbar-color: var(--rule-strong) transparent;
+}
+
+.rail::-webkit-scrollbar {
+  width: 6px;
+}
+
+.rail::-webkit-scrollbar-thumb {
+  background: var(--rule-strong);
+  border-radius: 3px;
+}
+
+.rail-title {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin: 0 0 10px;
+}
+
+.rail-stats {
+  font-family: var(--mono);
+  font-size: 11px;
+  line-height: 1.9;
+  color: var(--ink-soft);
+  margin: 0 0 22px;
+  padding-bottom: 22px;
+  border-bottom: 1px solid var(--rule);
+  word-break: break-all;
+}
+
+.rail-stats b {
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.navlist {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.navlink {
+  position: relative;
+  display: grid;
+  grid-template-columns: 26px minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: 8px;
+  padding: 7px 6px 7px 10px;
+  margin-left: -10px;
+  text-decoration: none;
+  border-radius: 2px;
+  color: var(--ink-soft);
+  transition: color 140ms var(--ease), background 140ms var(--ease);
+}
+
+.navlink::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 6px;
+  bottom: 6px;
+  width: 2px;
+  background: var(--accent);
+  scale: 1 0;
+  transform-origin: top;
+  transition: scale 200ms var(--ease);
+}
+
+.navlink:hover {
+  color: var(--ink);
+  background: rgba(255, 255, 255, 0.45);
+}
+
+.navlink.is-active {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.navlink.is-active::before {
+  scale: 1 1;
+}
+
+.nav-no {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--muted);
+  letter-spacing: 0.04em;
+}
+
+.navlink.is-active .nav-no {
+  color: var(--accent);
+}
+
+.nav-title {
+  font-family: var(--serif);
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.nav-count {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--muted);
+  padding-top: 2px;
+}
+
+.rail-foot {
+  margin-top: 26px;
+  padding-top: 18px;
+  border-top: 1px solid var(--rule);
+  font-size: 11.5px;
+  line-height: 1.75;
+  color: var(--muted);
+}
+
+.rail-foot strong {
+  display: block;
+  color: var(--ink-soft);
+  font-weight: 600;
+  margin-bottom: 2px;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+/* ---------------- 主栏 ---------------- */
+
+.main {
+  min-width: 0;
+  padding: 0 0 120px 56px;
+}
+
+.masthead {
+  position: relative;
+  padding: 76px 0 52px;
+  border-bottom: 1px solid var(--rule);
+  animation: rise 700ms var(--ease) both;
+}
+
+.masthead-ghost {
+  position: absolute;
+  right: -8px;
+  top: 44px;
+  font-family: var(--mono);
+  font-size: 132px;
+  line-height: 1;
+  letter-spacing: -0.04em;
+  color: var(--ink);
+  opacity: 0.05;
+  pointer-events: none;
+  user-select: none;
+}
+
+.eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin: 0 0 22px;
+}
+
+.eyebrow::after {
+  content: "";
+  width: 64px;
+  height: 1px;
+  background: var(--rule-strong);
+}
+
+h1 {
+  font-family: var(--serif);
+  font-weight: 600;
+  font-size: clamp(2.4rem, 4.2vw, 3.5rem);
+  line-height: 1.16;
+  letter-spacing: 0.02em;
+  margin: 0 0 20px;
+  max-width: 15em;
+}
+
+.lede {
+  font-family: var(--serif);
+  font-size: 16.5px;
+  line-height: 1.95;
+  color: var(--ink-soft);
+  max-width: 36em;
+  margin: 0 0 34px;
+}
+
+.lede em {
+  font-style: normal;
+  color: var(--accent);
+  border-bottom: 1px solid var(--accent-soft);
+}
+
+.stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0;
+  margin: 0;
+  border-top: 1px solid var(--ink);
+  border-bottom: 1px solid var(--rule);
+}
+
+.stat {
+  flex: 1 1 120px;
+  padding: 15px 20px 14px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.stat + .stat {
+  padding-left: 20px;
+  border-left: 1px solid var(--rule);
+}
+
+.stat b {
+  font-family: var(--serif);
+  font-size: 27px;
+  font-weight: 600;
+  line-height: 1.1;
+  letter-spacing: 0.01em;
+}
+
+.stat span {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* ---------------- 模块 ---------------- */
+
+.module {
+  padding-top: 76px;
+  animation: rise 700ms var(--ease) both;
+  animation-delay: calc(var(--i, 0) * 40ms);
+}
+
+.module.is-hidden,
+.lens.is-filtered {
+  display: none;
+}
+
+.module-head {
+  position: relative;
+  display: grid;
+  grid-template-columns: 78px minmax(0, 1fr);
+  gap: 22px;
+  padding-bottom: 26px;
+  border-bottom: 1px solid var(--ink);
+}
+
+.mod-no {
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  color: var(--accent);
+  padding-top: 12px;
+}
+
+.mod-no::after {
+  content: "";
+  display: block;
+  width: 24px;
+  height: 1px;
+  background: var(--accent);
+  margin-top: 8px;
+}
+
+h2 {
+  font-family: var(--serif);
+  font-weight: 600;
+  font-size: clamp(1.65rem, 2.4vw, 2.15rem);
+  line-height: 1.3;
+  letter-spacing: 0.02em;
+  margin: 0 0 12px;
+}
+
+.mod-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  margin: 0 0 16px;
+}
+
+.mod-meta code {
+  font-family: var(--mono);
+  color: var(--ink-soft);
+  letter-spacing: 0;
+}
+
+.mod-decision {
+  font-family: var(--serif);
+  font-size: 14.5px;
+  line-height: 1.9;
+  color: var(--ink-soft);
+  margin: 0 0 18px;
+  max-width: 46em;
+  padding-left: 14px;
+  border-left: 2px solid var(--accent-soft);
+}
+
+.precond {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.precond li {
+  font-size: 11.5px;
+  line-height: 1.6;
+  color: var(--ink-soft);
+  border: 1px solid var(--rule);
+  background: rgba(255, 255, 255, 0.4);
+  padding: 3px 9px;
+  border-radius: 999px;
+}
+
+.precond li::before {
+  content: "前提 · ";
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+
+/* ---------------- Lens 条目 ---------------- */
+
+.lens {
+  border-bottom: 1px solid var(--rule);
+  transition: background 200ms var(--ease);
+}
+
+.lens:hover {
+  background: rgba(255, 255, 255, 0.42);
+}
+
+.lens-head {
+  appearance: none;
+  width: 100%;
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr) 26px;
+  align-items: start;
+  gap: 14px;
+  padding: 24px 8px 22px 0;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.lens-no {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  padding-top: 6px;
+  transition: color 160ms var(--ease);
+}
+
+.lens:hover .lens-no,
+.lens.is-open .lens-no {
+  color: var(--accent);
+}
+
+.lens-text {
+  min-width: 0;
+}
+
+.lens-name {
+  display: block;
+  font-family: var(--serif);
+  font-size: 18.5px;
+  font-weight: 600;
+  line-height: 1.5;
+  letter-spacing: 0.015em;
+  margin: 0 0 8px;
+  transition: color 160ms var(--ease);
+}
+
+.lens:hover .lens-name {
+  color: var(--accent);
+}
+
+.lens-q {
+  display: block;
+  font-family: var(--serif);
+  font-size: 14px;
+  line-height: 1.85;
+  color: var(--ink-soft);
+  margin: 0;
+  max-width: 44em;
+}
+
+.lens-flags {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-top: 12px;
+}
+
+.flag {
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  border: 1px solid var(--rule);
+  border-radius: 2px;
+  padding: 1px 6px;
+  background: rgba(255, 255, 255, 0.35);
+}
+
+.flag-accent {
+  color: var(--accent);
+  border-color: var(--accent-soft);
+  background: rgba(158, 50, 35, 0.055);
+}
+
+.toggle-mark {
+  position: relative;
+  width: 26px;
+  height: 26px;
+  margin-top: 2px;
+  border: 1px solid transparent;
+  border-radius: 50%;
+  transition: border-color 180ms var(--ease), background 180ms var(--ease);
+}
+
+.toggle-mark::before,
+.toggle-mark::after {
+  content: "";
+  position: absolute;
+  inset: 50% 7px auto;
+  height: 1.5px;
+  background: var(--ink-soft);
+  transition: rotate 260ms var(--ease), background 180ms var(--ease);
+}
+
+.toggle-mark::after {
+  rotate: 90deg;
+}
+
+.lens-head:hover .toggle-mark {
+  border-color: var(--rule-strong);
+}
+
+.lens.is-open .toggle-mark {
+  background: var(--ink);
+  border-color: var(--ink);
+}
+
+.lens.is-open .toggle-mark::before,
+.lens.is-open .toggle-mark::after {
+  background: var(--paper);
+}
+
+.lens.is-open .toggle-mark::after {
+  rotate: 0deg;
+}
+
+.lens-body {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 320ms var(--ease);
+}
+
+.lens.is-open .lens-body {
+  grid-template-rows: 1fr;
+}
+
+.lens-body > .lens-body-inner {
+  overflow: hidden;
+  min-height: 0;
+}
+
+.lens.is-open .lens-body > .lens-body-inner {
+  overflow: visible;
+}
+
+.lens-body-content {
+  padding: 4px 8px 34px 66px;
+  opacity: 0;
+  translate: 0 -4px;
+  transition: opacity 240ms var(--ease) 60ms, translate 240ms var(--ease) 60ms;
+}
+
+.lens.is-open .lens-body-content {
+  opacity: 1;
+  translate: 0;
+}
+
+.fields {
+  display: grid;
+  gap: 0;
+  border-top: 1px solid var(--rule);
+}
+
+.field {
+  display: grid;
+  grid-template-columns: 106px minmax(0, 1fr);
+  gap: 20px;
+  padding: 15px 0;
+  border-bottom: 1px solid var(--rule);
+}
+
+.field:last-child {
+  border-bottom: 0;
+}
+
+.field-label {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+  padding-top: 5px;
+}
+
+.field-label .zh {
+  display: block;
+  font-family: var(--sans);
+  font-size: 11.5px;
+  letter-spacing: 0.06em;
+  color: var(--ink-soft);
+  margin-top: 3px;
+}
+
+.field-val {
+  font-family: var(--serif);
+  font-size: 14.5px;
+  line-height: 1.95;
+  color: var(--ink);
+  min-width: 0;
+}
+
+.field-val p {
+  margin: 0;
+}
+
+.field-val ul,
+.field-val ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: step;
+}
+
+.field-val li {
+  position: relative;
+  padding-left: 26px;
+  margin-bottom: 8px;
+}
+
+.field-val li:last-child {
+  margin-bottom: 0;
+}
+
+.field-val li::before {
+  content: "—";
+  position: absolute;
+  left: 0;
+  top: 0;
+  color: var(--rule-strong);
+  font-family: var(--mono);
+  font-size: 12px;
+}
+
+.steps {
+  counter-reset: step;
+}
+
+.steps li {
+  padding-left: 34px;
+  counter-increment: step;
+}
+
+.steps li::before {
+  content: counter(step, decimal-leading-zero);
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--accent);
+  top: 4px;
+  letter-spacing: 0.04em;
+}
+
+.field-val .note {
+  font-family: var(--sans);
+  font-size: 12px;
+  line-height: 1.7;
+  color: var(--muted);
+}
+
+.muted {
+  color: var(--muted);
+}
+
+.idline {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-top: 20px;
+  padding-top: 14px;
+  border-top: 1px dashed var(--rule);
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.02em;
+  color: var(--muted);
+}
+
+.copybtn {
+  appearance: none;
+  border: 1px solid var(--rule);
+  background: transparent;
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 2px 7px;
+  border-radius: 2px;
+  cursor: pointer;
+  transition: color 140ms, border-color 140ms, background 140ms;
+}
+
+.copybtn:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: rgba(158, 50, 35, 0.05);
+}
+
+.copybtn.is-done {
+  color: var(--paper-raised);
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+/* 变体 */
+.variants {
+  margin-top: 8px;
+  border-top: 1px solid var(--rule);
+}
+
+.variant {
+  padding: 16px 0;
+  border-bottom: 1px solid var(--rule);
+}
+
+.variant:last-child {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+
+.variant-name {
+  font-family: var(--serif);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.7;
+  margin: 0 0 8px;
+  color: var(--ink-soft);
+}
+
+.variant-name::before {
+  content: "变体 ";
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: 0.1em;
+  color: var(--accent);
+}
+
+.variant ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.variant li {
+  position: relative;
+  padding-left: 16px;
+  font-family: var(--serif);
+  font-size: 13.5px;
+  line-height: 1.9;
+  color: var(--ink-soft);
+  margin-bottom: 3px;
+}
+
+.variant li::before {
+  content: "·";
+  position: absolute;
+  left: 2px;
+  color: var(--rule-strong);
+}
+
+.sublabel {
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin: 10px 0 4px;
+}
+
+/* ---------------- Recipe ---------------- */
+
+.recipes {
+  margin-top: 34px;
+  padding: 22px 24px 8px;
+  border: 1px solid var(--rule);
+  background: rgba(255, 255, 255, 0.34);
+}
+
+.recipes-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  border-bottom: 1px solid var(--rule);
+  padding-bottom: 12px;
+  margin-bottom: 4px;
+}
+
+.recipes-head h3 {
+  font-family: var(--serif);
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  margin: 0;
+}
+
+.recipes-head span {
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.recipe {
+  padding: 14px 0;
+  border-bottom: 1px solid var(--rule);
+}
+
+.recipe:last-child {
+  border-bottom: 0;
+}
+
+.recipe-name {
+  font-family: var(--serif);
+  font-size: 14.5px;
+  font-weight: 600;
+  margin: 0 0 6px;
+}
+
+.recipe p {
+  font-family: var(--serif);
+  font-size: 13.5px;
+  line-height: 1.9;
+  color: var(--ink-soft);
+  margin: 0 0 8px;
+}
+
+.recipe-meta {
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+}
+
+.recipes-note {
+  font-family: var(--sans);
+  font-size: 11.5px;
+  line-height: 1.7;
+  color: var(--muted);
+  margin: 12px 0 16px;
+  padding-left: 12px;
+  border-left: 2px solid var(--rule-strong);
+}
+
+/* ---------------- 空状态 / 页脚 ---------------- */
+
+.empty-state {
+  display: none;
+  padding: 90px 0 40px;
+  font-family: var(--serif);
+  font-size: 16px;
+  color: var(--muted);
+}
+
+.empty-state.is-visible {
+  display: block;
+}
+
+.empty-state b {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.footer {
+  margin-top: 90px;
+  padding-top: 26px;
+  border-top: 1px solid var(--ink);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px 40px;
+  justify-content: space-between;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  line-height: 1.9;
+  color: var(--muted);
+}
+
+.footer p {
+  margin: 0;
+  max-width: 46em;
+}
+
+.footer strong {
+  color: var(--ink-soft);
+  font-weight: 600;
+}
+
+mark {
+  background: var(--accent-soft);
+  color: var(--ink);
+  padding: 0 1px;
+  border-radius: 1px;
+}
+
+/* 搜索态：收起刊头，让结果直接进入视野 */
+
+body.is-searching .masthead {
+  display: none;
+}
+
+body.is-searching .module {
+  padding-top: 34px;
+}
+
+body.is-searching .module:first-of-type {
+  animation: none;
+}
+
+/* ---------------- 动效 ---------------- */
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    translate: 0 14px;
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ---------------- 响应式 ---------------- */
+
+@media (max-width: 1180px) {
+  :root {
+    --rail-w: 232px;
+  }
+  .main {
+    padding-left: 36px;
+  }
+  .lens-body-content {
+    padding-left: 52px;
+  }
+}
+
+@media (max-width: 980px) {
+  .shell {
+    grid-template-columns: minmax(0, 1fr);
+    padding: 0 22px;
+  }
+  .rail {
+    position: static;
+    height: auto;
+    overflow: visible;
+    border-right: 0;
+    border-bottom: 1px solid var(--rule);
+    padding: 20px 0 18px;
+  }
+  .rail-stats,
+  .rail-foot {
+    display: none;
+  }
+  .navlist {
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    padding-bottom: 6px;
+    scrollbar-width: none;
+  }
+  .navlist::-webkit-scrollbar {
+    display: none;
+  }
+  .navlink {
+    flex: none;
+    grid-template-columns: auto auto;
+    gap: 6px;
+    padding: 5px 10px;
+    margin-left: 0;
+    border: 1px solid var(--rule);
+    border-radius: 999px;
+    white-space: nowrap;
+  }
+  .navlink::before {
+    display: none;
+  }
+  .navlink.is-active {
+    border-color: var(--accent);
+    background: rgba(158, 50, 35, 0.06);
+  }
+  .nav-count {
+    display: none;
+  }
+  .main {
+    padding: 0 0 80px;
+  }
+  .masthead {
+    padding-top: 44px;
+  }
+  .masthead-ghost {
+    font-size: 88px;
+    top: 30px;
+    opacity: 0.035;
+  }
+  .module {
+    padding-top: 54px;
+  }
+  .module-head {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 6px;
+  }
+  .mod-no {
+    padding-top: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .mod-no::after {
+    margin-top: 0;
+  }
+  .lens-head {
+    grid-template-columns: 34px minmax(0, 1fr) 24px;
+    gap: 10px;
+    padding: 20px 0;
+  }
+  .lens-name {
+    font-size: 16.5px;
+  }
+  .lens-body-content {
+    padding: 0 0 28px 44px;
+  }
+  .field {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 4px;
+    padding: 12px 0;
+  }
+  .field-label {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    padding-top: 0;
+  }
+  .field-label .zh {
+    margin-top: 0;
+  }
+  .topbar {
+    flex-wrap: wrap;
+    gap: 10px 14px;
+    padding: 11px 16px;
+  }
+  .brand {
+    flex: 1 1 auto;
+  }
+  .search-wrap {
+    order: 3;
+    flex-basis: 100%;
+    max-width: none;
+    margin-left: 0;
+  }
+  .toolbtn {
+    padding: 6px 9px;
+  }
+  h1 {
+    font-size: clamp(2rem, 8vw, 2.8rem);
+  }
+  .stat b {
+    font-size: 22px;
+  }
+  .precond li {
+    font-size: 11px;
+  }
+  .recipes {
+    padding: 18px 16px 4px;
+  }
+}
+
+@media (max-width: 560px) {
+  .masthead-ghost {
+    display: none;
+  }
+  .lens-body-content {
+    padding-left: 0;
+  }
+  .lens-head {
+    grid-template-columns: 28px minmax(0, 1fr) 20px;
+  }
+  .stat {
+    flex-basis: 50%;
+  }
+  .stat:nth-child(3) {
+    padding-left: 0;
+    border-left: 0;
+    border-top: 1px solid var(--rule);
+  }
+  .stat:nth-child(4) {
+    border-top: 1px solid var(--rule);
+  }
+}
+
+/* ---------------- 打印 ---------------- */
+
+@media print {
+  :root {
+    --paper: #fff;
+    --paper-raised: #fff;
+  }
+  body::before,
+  .topbar,
+  .rail,
+  .masthead-ghost,
+  .toggle-mark {
+    display: none !important;
+  }
+  .shell {
+    display: block;
+    padding: 0;
+    max-width: none;
+  }
+  .main {
+    padding: 0;
+  }
+  .lens-body {
+    grid-template-rows: 1fr !important;
+  }
+  .lens-body-content {
+    opacity: 1 !important;
+    translate: none !important;
+    padding-left: 0;
+  }
+  .lens,
+  .module {
+    break-inside: auto;
+  }
+  .module {
+    break-before: page;
+  }
+  .lens-head {
+    cursor: default;
+  }
+  .lens-body > .lens-body-inner {
+    overflow: visible !important;
+  }
+}
+
+</style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-kicker">Method&nbsp;Wiki</span>
+      <span class="brand-name">策略方法库</span>
+    </div>
+    <div class="search-wrap">
+      <svg class="search-icon" viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="7" cy="7" r="4.4" stroke="currentColor" stroke-width="1.3"/><path d="M10.4 10.4 14 14" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+      <input id="search" class="search" type="search" placeholder="搜索方法、判断问题、页面表达或步骤…" autocomplete="off" spellcheck="false" aria-label="搜索方法库">
+      <span class="search-kbd">/</span>
+      <span class="search-count"></span>
+    </div>
+    <div class="toolgroup">
+      <button class="toolbtn" id="expand-all" type="button" aria-pressed="false">展开全部</button>
+      <button class="toolbtn" id="collapse-all" type="button" aria-pressed="false">收起</button>
+    </div>
+  </header>
+
+  <div class="shell">
+    <aside class="rail">
+      <p class="rail-title">目录 · 11 模块</p>
+      <p class="rail-stats">
+        <b>33</b> 个方法 · <b>22</b> 个变体<br>
+        已确认 33/33 · 含页表达 12<br>
+        指纹 <span title="5a0ee441271331e287d3db13c938007e88ae04e02ee92c9c41943e9f1dcfcf33">5a0ee44127</span>
+      </p>
+      <ul class="navlist">
+        <li><a class="navlink" href="#mod_brand-strategy" data-target="mod_brand-strategy">
+        <span class="nav-no">M01</span>
+        <span class="nav-title">品牌策略开发</span>
+        <span class="nav-count">7</span>
+      </a></li><li><a class="navlink" href="#mod_campaign-journey" data-target="mod_campaign-journey">
+        <span class="nav-no">M02</span>
+        <span class="nav-title">传播战役与消费者旅程</span>
+        <span class="nav-count">4</span>
+      </a></li><li><a class="navlink" href="#mod_competitor-analysis" data-target="mod_competitor-analysis">
+        <span class="nav-no">M03</span>
+        <span class="nav-title">竞品分析</span>
+        <span class="nav-count">3</span>
+      </a></li><li><a class="navlink" href="#mod_consumer-insight" data-target="mod_consumer-insight">
+        <span class="nav-no">M04</span>
+        <span class="nav-title">消费者洞察</span>
+        <span class="nav-count">1</span>
+      </a></li><li><a class="navlink" href="#mod_content-execution" data-target="mod_content-execution">
+        <span class="nav-no">M05</span>
+        <span class="nav-title">内容策略与执行</span>
+        <span class="nav-count">3</span>
+      </a></li><li><a class="navlink" href="#mod_creator-kol" data-target="mod_creator-kol">
+        <span class="nav-no">M06</span>
+        <span class="nav-title">KOL/达人矩阵策略</span>
+        <span class="nav-count">2</span>
+      </a></li><li><a class="navlink" href="#mod_execution-planning" data-target="mod_execution-planning">
+        <span class="nav-no">M07</span>
+        <span class="nav-title">执行规划与预算节奏</span>
+        <span class="nav-count">2</span>
+      </a></li><li><a class="navlink" href="#mod_market-category" data-target="mod_market-category">
+        <span class="nav-no">M08</span>
+        <span class="nav-title">市场与品类分析</span>
+        <span class="nav-count">1</span>
+      </a></li><li><a class="navlink" href="#mod_measurement" data-target="mod_measurement">
+        <span class="nav-no">M09</span>
+        <span class="nav-title">效果衡量与KPI</span>
+        <span class="nav-count">2</span>
+      </a></li><li><a class="navlink" href="#mod_media-sem" data-target="mod_media-sem">
+        <span class="nav-no">M10</span>
+        <span class="nav-title">媒体策略与SEM投放</span>
+        <span class="nav-count">2</span>
+      </a></li><li><a class="navlink" href="#mod_product-value" data-target="mod_product-value">
+        <span class="nav-no">M11</span>
+        <span class="nav-title">产品价值与卖点提炼</span>
+        <span class="nav-count">6</span>
+      </a></li>
+      </ul>
+      <p class="rail-foot">
+        <strong>Use</strong>
+        Markdown 真源方法库：提供推导步骤与页面表达结构，项目事实与结论仍由项目材料决定。
+      </p>
+    </aside>
+
+    <main class="main">
+      <section class="masthead">
+        <div class="masthead-ghost">WIKI</div>
+        <p class="eyebrow">Planners Method Wiki · Markdown</p>
+        <h1>可复用的策略判断与页面表达方法</h1>
+        <p class="lede">
+          每个条目是一篇独立维护的 Markdown 方法页：它说明自己解决什么问题、需要什么输入、按什么顺序推导、
+          <em>页面该如何表达</em>以及在哪里失效。
+        </p>
+        <div class="stats">
+          <div class="stat"><b>11</b><span>Modules</span></div>
+          <div class="stat"><b>33</b><span>Lenses</span></div>
+          <div class="stat"><b>22</b><span>Variants</span></div>
+          <div class="stat"><b>12</b><span>Page Guides</span></div>
+        </div>
+      </section>
+
+      
+      <section class="module" id="mod_brand-strategy" style="--i:0">
+        <header class="module-head">
+          <div class="mod-no">M01</div>
+          <div>
+            <h2>品牌策略开发</h2>
+            <p class="mod-meta">
+              <span><code>mod_brand-strategy</code></span>
+              <span>7 个方法</span>
+            </p>
+            <p class="mod-decision">模块「品牌策略开发」新增 2 个可复用方法，源自 3 个案例（某运动品牌健步文化策略、某运动品牌跑步户外策略、某童装品牌升级），经跨案例验证。（版本 7.0.3 · 批准 2026-07-28）</p>
+            <ul class="precond"><li>项目需包含与品牌策略开发相关的分析材料，包括市场环境、消费者洞察、品牌现状等</li><li>分析单元需通过B2分段验证，并经过品牌名预检</li><li>用于品牌诊断与再定位场景时，需有至少两个维度的品牌表现数据（市场表现、消费者认知、价格定位等）</li></ul>
+          </div>
+        </header>
+        <div class="lenslist">
+        <article class="lens" id="lens_mod_brand-strategy-07fb9aa8" data-search="时代情绪驱动型品牌价值推导 
+ 当品牌需要提升价值认知、摆脱低溢价困境时，如何从社会文化洞察出发，将消费者时代情绪转化为品牌核心主张？ 
+ 品牌面临认知老化或低价值感问题，需要提升溢价空间 
+ 存在可捕捉的群体性社会情绪（压力、焦虑、内卷等），且与品类使用场景相关 
+ 品牌有差异化功能可以支撑新价值主张 
+ 目标消费者对生活方式的关注超越了对产品功能的基本需求 
+ 品类高度理性（如工业品、b2b），消费者购买决策主要由功能参数驱动 
+ 品牌已有极强的价值认知，不需要通过情绪驱动重建 
+ 缺乏消费者对品类的情感连结数据或文化洞察素材 
+ 社会文化趋势报告或大数据趋势洞察（如小红书趋势、社会调查数据） 
+ 消费者对品类的已有认知和情感关联调研 
+ 品牌现有功能优势和科技资产梳理 
+ 竞品价值主张和品牌策略对比 
+ 消费者日常使用场景和痛点调研 
+ 扫描时代情绪：通过社会趋势报告、社交媒体话题、消费者调研捕捉当下的群体性压力和渴望，识别与品类使用场景相关的情绪锚点 
+ 连接品类功能与情绪价值：梳理品牌/品类的核心功能利益，找到能够回应时代情绪的功能支点，将&#39;功能利益&#39;升维为&#39;精神价值&#39; 
+ 建立从文化洞察到品牌利益的逻辑链：按&#39;时代痛点→消费者渴望→品类价值→品牌利益→传播主张&#39;的层次构建完整推导 
+ 传播主张提炼：基于逻辑链输出品牌传播主张和战役主题，核心主张应既能打动情感又能关联功能 
+ 验证主张的泛化性：将主张核心理念与不同场景、人群、产品线进行匹配测试，确保有足够的传播扩展性 
+ 时代情绪洞察报告（痛点/渴望/趋势） 
+ 品牌价值主张（从功能到情感的完整论点） 
+ 传播战役核心主题 
+ 品牌价值提升的传播策略框架 
+ 将单一社会现象标签化、表面化，未深入分析其与品类的真实关联 
+ 价值主张过于精神化而脱离产品实质，造成信任鸿沟 
+ 情绪洞察年份性过强，缺乏跨年度的持续性 
+ 该方法主要适用于面向c端、有较强情感属性或生活方式关联的品类 
+ 情绪洞察需要建立在真实消费者数据而非直觉判断上 
+ 跨文化应用时需重新校准本地情绪锚点 
+ 源自某运动品牌健步系列传播策略：从&#39;打工人亚健康/内卷/疲惫&#39;时代情绪出发，通过&#39;走路为生活减负&#39;连接舒适科技，推导出&#39;为走路减负，为生活减负&#39;品牌主张 
+ 趋势背景与情绪锚点 概述目标人群所处的时代背景和群体性情绪（压力、焦虑、渴望等）。展示可获取的趋势数据或社会观察，建立品类使用场景与情绪锚点的关联。不需要全面数据，1-2个有说服力的趋势信号即可 
+ 从功能到价值的逻辑链 展示品牌功能利益如何回应时代情绪的推导逻辑。用流程图或层级框架呈现&#39;时代痛点→消费者渴望→品类价值→品牌利益→传播主张&#39;的完整链路。每个环节写清楚&#39;因为x，所以y&#39;的因果关系 
+ 品牌价值主张 呈现核心品牌主张和传播主题。包含主张文案、支撑论据（功能支撑点+情感回应力），以及1-2个不同侧面的option供选择。每版option附一句话说明它回应什么情绪/场景 
+ 主张扩展性检验 检验主张在不同人群、场景、产品线下的适用性。可以是矩阵、表格或要点列表——核心是展示主张有足够的弹性空间，不只在单一场景成立 
+ 时代情绪驱动型品牌文化升级法 从宏观社会情绪中提炼与品类使用场景相关的核心文化张力 诊断品牌当前在消费者心智中的认知标签（年龄/时尚度/使用动机/情感联想） 对消费者使用行为进行场景化分类，识别可承载文化价值的场景 将功能行为重新定义为文化行为，建立品牌文化概念命名 定义品牌文化的核心主张与价值观表述 将文化主张分解为可独立传播的内容支柱和社交话题 
+ lens_mod_brand-strategy-07fb9aa8" data-name="时代情绪驱动型品牌价值推导" data-q="当品牌需要提升价值认知、摆脱低溢价困境时，如何从社会文化洞察出发，将消费者时代情绪转化为品牌核心主张？">
+          <button class="lens-head" type="button" aria-expanded="false" aria-controls="lens_mod_brand-strategy-07fb9aa8-body">
+            <span class="lens-no">01</span>
+            <span class="lens-text">
+              <span class="lens-name">时代情绪驱动型品牌价值推导</span>
+              <span class="lens-q">当品牌需要提升价值认知、摆脱低溢价困境时，如何从社会文化洞察出发，将消费者时代情绪转化为品牌核心主张？</span>
+              <span class="lens-flags"><span class="flag ">已确认</span><span class="flag flag-accent">变体 1</span><span class="flag">5 步</span><span class="flag flag-accent">4 页表达</span></span>
+            </span>
+            <span class="toggle-mark" aria-hidden="true"></span>
+          </button>
+          <div class="lens-body" id="lens_mod_brand-strategy-07fb9aa8-body">
+            <div class="lens-body-inner">
+              <div class="lens-body-content">
+                <div class="fields">
+                  <div class="field"><div class="field-label">Use when<span class="zh">适用条件</span></div><div class="field-val"><ul><li>品牌面临认知老化或低价值感问题，需要提升溢价空间</li><li>存在可捕捉的群体性社会情绪（压力、焦虑、内卷等），且与品类使用场景相关</li><li>品牌有差异化功能可以支撑新价值主张</li><li>目标消费者对生活方式的关注超越了对产品功能的基本需求</li></ul></div></div>
+                  <div class="field"><div class="field-label">Skip when<span class="zh">跳过条件</span></div><div class="field-val"><ul><li>品类高度理性（如工业品、B2B），消费者购买决策主要由功能参数驱动</li><li>品牌已有极强的价值认知，不需要通过情绪驱动重建</li><li>缺乏消费者对品类的情感连结数据或文化洞察素材</li></ul></div></div>
+                  <div class="field"><div class="field-label">Inputs<span class="zh">所需输入</span></div><div class="field-val"><ul><li>社会文化趋势报告或大数据趋势洞察（如小红书趋势、社会调查数据）</li><li>消费者对品类的已有认知和情感关联调研</li><li>品牌现有功能优势和科技资产梳理</li><li>竞品价值主张和品牌策略对比</li><li>消费者日常使用场景和痛点调研</li></ul></div></div>
+                  <div class="field"><div class="field-label">Operations<span class="zh">操作步骤</span></div><div class="field-val"><ol class="steps"><li>扫描时代情绪：通过社会趋势报告、社交媒体话题、消费者调研捕捉当下的群体性压力和渴望，识别与品类使用场景相关的情绪锚点</li><li>连接品类功能与情绪价值：梳理品牌/品类的核心功能利益，找到能够回应时代情绪的功能支点，将&#39;功能利益&#39;升维为&#39;精神价值&#39;</li><li>建立从文化洞察到品牌利益的逻辑链：按&#39;时代痛点→消费者渴望→品类价值→品牌利益→传播主张&#39;的层次构建完整推导</li><li>传播主张提炼：基于逻辑链输出品牌传播主张和战役主题，核心主张应既能打动情感又能关联功能</li><li>验证主张的泛化性：将主张核心理念与不同场景、人群、产品线进行匹配测试，确保有足够的传播扩展性</li></ol></div></div>
+                  <div class="field"><div class="field-label">Page structure<span class="zh">页面表达</span></div><div class="field-val"><ul><li><b>P1 · 趋势背景与情绪锚点</b><br><span class="note">概述目标人群所处的时代背景和群体性情绪（压力、焦虑、渴望等）。展示可获取的趋势数据或社会观察，建立品类使用场景与情绪锚点的关联。不需要全面数据，1-2个有说服力的趋势信号即可</span></li><li><b>P2 · 从功能到价值的逻辑链</b><br><span class="note">展示品牌功能利益如何回应时代情绪的推导逻辑。用流程图或层级框架呈现&#39;时代痛点→消费者渴望→品类价值→品牌利益→传播主张&#39;的完整链路。每个环节写清楚&#39;因为X，所以Y&#39;的因果关系</span></li><li><b>P3 · 品牌价值主张</b><br><span class="note">呈现核心品牌主张和传播主题。包含主张文案、支撑论据（功能支撑点+情感回应力），以及1-2个不同侧面的Option供选择。每版Option附一句话说明它回应什么情绪/场景</span></li><li><b>P4 · 主张扩展性检验</b><br><span class="note">检验主张在不同人群、场景、产品线下的适用性。可以是矩阵、表格或要点列表——核心是展示主张有足够的弹性空间，不只在单一场景成立</span></li></ul></div></div>
+                  <div class="field"><div class="field-label">Outputs<span class="zh">预期输出</span></div><div class="field-val"><ul><li>时代情绪洞察报告（痛点/渴望/趋势）</li><li>品牌价值主张（从功能到情感的完整论点）</li><li>传播战役核心主题</li><li>品牌价值提升的传播策略框架</li></ul></div></div>
+                  <div class="field"><div class="field-label">Failure modes<span class="zh">失效模式</span></div><div class="field-val"><ul><li>将单一社会现象标签化、表面化，未深入分析其与品类的真实关联</li><li>价值主张过于精神化而脱离产品实质，造成信任鸿沟</li><li>情绪洞察年份性过强，缺乏跨年度的持续性</li></ul></div></div>
+                  <div class="field"><div class="field-label">Boundaries<span class="zh">适用边界</span></div><div class="field-val"><ul><li>该方法主要适用于面向C端、有较强情感属性或生活方式关联的品类</li><li>情绪洞察需要建立在真实消费者数据而非直觉判断上</li><li>跨文化应用时需重新校准本地情绪锚点</li></ul></div></div>
+                  <div class="field"><div class="field-label">Evidence<span class="zh">案例证据</span></div><div class="field-val"><p>源自某运动品牌健步系列传播策略：从&#39;打工人亚健康/内卷/疲惫&#39;时代情绪出发，通过&#39;走路为生活减负&#39;连接舒适科技，推导出&#39;为走路减负，为生活减负&#39;品牌主张</p></div></div>
+                  <div class="field"><div class="field-label">Variant<span class="zh">变体与参考</span></div><div class="field-val"><div class="variants"><div class="variant"><p class="variant-name">时代情绪驱动型品牌文化升级法</p><div class="sublabel">适用条件</div><ul><li>品牌面临认知老化或低价值感问题，需要提升情感价值和溢价</li><li>存在可捕捉的群体性社会情绪，且与品类使用场景相关</li><li>品类使用行为具有足够的社会可见性，可以承载文化意义</li><li>品牌有一定用户基础，可以围绕文化概念建立社群</li></ul><div class="sublabel">操作步骤</div><ol class="steps"><li>从宏观社会情绪中提炼与品类使用场景相关的核心文化张力</li><li>诊断品牌当前在消费者心智中的认知标签（年龄/时尚度/使用动机/情感联想）</li><li>对消费者使用行为进行场景化分类，识别可承载文化价值的场景</li><li>将功能行为重新定义为文化行为，建立品牌文化概念命名</li><li>定义品牌文化的核心主张与价值观表述</li><li>将文化主张分解为可独立传播的内容支柱和社交话题</li></ol></div></div></div></div>
+                </div>
+                <div class="idline">
+                  <span>lens_mod_brand-strategy-07fb9aa8</span>
+                  <button class="copybtn" type="button" data-copy="lens_mod_brand-strategy-07fb9aa8">复制 ID</button>
+                  <span>lenses/lens_mod_brand-strategy-07fb9aa8.md · 更新 2026-07-28</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </article>
+        <article class="lens" id="lens_mod_brand-strategy-1387cea5" data-search="多维度品牌诊断与战略机会定位 
+ 当品牌在多个维度同时面临挑战时，如何系统诊断生意问题、用户问题、价格问题，并从中推导出战略破局方向？ 
+ 品牌出现增长停滞或市场份额下滑信号 
+ 需要同时从市场表现、消费者认知、产品价格三个维度分析问题 
+ 有品类和竞品的对比数据可作为参照基准 
+ 需要产出清晰的战略优先级和破局方向 
+ 品牌战略方向已经决策且执行层面问题为主 
+ 缺乏至少两个维度的品牌诊断数据 
+ 品类处于爆发增长期，增长问题不突出 
+ 品牌销量/市场份额历史数据（按渠道、品类维度拆分） 
+ 消费者品牌认知调研（年龄画像、品牌标签、购买动机） 
+ 产品矩阵与价格带分布 
+ 竞品增长速度与市场表现对比数据 
+ 品类市场容量与增长空间数据 
+ 生意维度诊断：分析销量/份额的趋势变化，识别增长瓶颈在哪些渠道、品类、价格带，定位&#39;量&#39;和&#39;价&#39;的问题分别来自哪里 
+ 用户维度诊断：分析消费者画像变化趋势，识别用户年龄结构是否趋老，品牌在消费者心中的标签属性（如时尚度、科技感、性价比等），以及标签是否存在负面迁移 
+ 价格维度诊断：梳理产品矩阵和价格带分布，判断是否存在均价下行压力或高端线销售占比不足，识别提价空间和目标 
+ 竞品维度交叉验证：将以上三个维度的发现与竞品同期表现对比，判断问题是行业性的还是品牌独有 
+ 战略破局提炼：综合三维度诊断，识别最关键的1-2个杠杆点，提出优先级明确的&#39;做什么→为什么→怎么做&#39;的战略方向 
+ 三维品牌健康度诊断报告 
+ 品牌问题优先级矩阵 
+ 战略破局方向与关键行动建议 
+ 品类增长空间与品牌可达目标 
+ 诊断维度过于全面但没有优先级排序，战略方向不聚焦 
+ 将现象误判为根源（如将&#39;增长慢&#39;归因于单一因素） 
+ 数据维度不够导致结论偏差 
+ 诊断结论过于悲观或乐观，缺乏平衡视角 
+ 诊断需要多源数据验证，单一数据源的结论置信度应标注 
+ 跨品类应用时，品类增长阶段不同（导入期vs成熟期）诊断焦点应调整 
+ 源自某运动品牌健步系列（增长乏力+老年人标签+价格提升需求）和某童装品牌升级（增速放缓+核心业务指标下滑+客群老化+产品力欠佳）两个案例的共同诊断框架 
+ 品牌诊断框架 展示品牌诊断的多维框架（生意/用户/价格三个维度），说明为什么要从这三个维度进行分析，以及各维度的诊断逻辑和判断标准 
+ 维度一：生意表现 展示品牌销量/份额的趋势变化，识别增长瓶颈的位置（渠道/品类/价格带）。可以用趋势图或对比表，核心是回答&#39;增长卡在哪里&#39; 
+ 维度二：用户认知 展示消费者品牌认知状况——用户画像是否趋老、品牌标签是否负面变化、品牌吸引力是否下降。有调研数据用数据，没有则用定性观察或渠道反馈 
+ 维度三：价格结构 展示产品矩阵与价格带分布，判断是否存在均价下行压力或高端线不足。核心是回答&#39;品牌是否有提价空间、在哪里提、消费者是否接受&#39; 
+ 破局方向与优先级 综合三维度诊断结论，识别最关键的战略杠杆点。按优先级列出破局方向，每个方向说明&#39;做什么→为什么是这个→预期效果&#39; 
+ 品类进入的五步市场分析链 扫描目标品类整体规模、增速和品类生命周期阶段 分解品类结构：识别各子品类规模占比、增长动力和消费者渗透率 捕捉推动品类增长的关键消费趋势并评估可持续性 分层竞争格局：按国际品牌/本土大众/新兴dtc/跨界品牌四类竞争者分层 对照品牌自身资产，判断品牌在品类中的独特进入位置 
+ lens_mod_brand-strategy-1387cea5" data-name="多维度品牌诊断与战略机会定位" data-q="当品牌在多个维度同时面临挑战时，如何系统诊断生意问题、用户问题、价格问题，并从中推导出战略破局方向？">
+          <button class="lens-head" type="button" aria-expanded="false" aria-controls="lens_mod_brand-strategy-1387cea5-body">
+            <span class="lens-no">02</span>
+            <span class="lens-text">
+              <span class="lens-name">多维度品牌诊断与战略机会定位</span>
+              <span class="lens-q">当品牌在多个维度同时面临挑战时，如何系统诊断生意问题、用户问题、价格问题，并从中推导出战略破局方向？</span>
+              <span class="lens-flags"><span class="flag ">已确认</span><span class="flag flag-accent">变体 1</span><span class="flag">5 步</span><span class="flag flag-accent">5 页表达</span></span>
+            </span>
+            <span class="toggle-mark" aria-hidden="true"></span>
+          </button>
+          <div class="lens-body" id="lens_mod_brand-strategy-1387cea5-body">
+            <div class="lens-body-inner">
+              <div class="lens-body-content">
+                <div class="fields">
+                  <div class="field"><div class="field-label">Use when<span class="zh">适用条件</span></div><div class="field-val"><ul><li>品牌出现增长停滞或市场份额下滑信号</li><li>需要同时从市场表现、消费者认知、产品价格三个维度分析问题</li><li>有品类和竞品的对比数据可作为参照基准</li><li>需要产出清晰的战略优先级和破局方向</li></ul></div></div>
+                  <div class="field"><div class="field-label">Skip when<span class="zh">跳过条件</span></div><div class="field-val"><ul><li>品牌战略方向已经决策且执行层面问题为主</li><li>缺乏至少两个维度的品牌诊断数据</li><li>品类处于爆发增长期，增长问题不突出</li></ul></div></div>
+                  <div class="field"><div class="field-label">Inputs<span class="zh">所需输入</span></div><div class="field-val"><ul><li>品牌销量/市场份额历史数据（按渠道、品类维度拆分）</li><li>消费者品牌认知调研（年龄画像、品牌标签、购买动机）</li><li>产品矩阵与价格带分布</li><li>竞品增长速度与市场表现对比数据</li><li>品类市场容量与增长空间数据</li></ul></div></div>
+                  <div class="field"><div class="field-label">Operations<span class="zh">操作步骤</span></div><div class="field-val"><ol class="steps"><li>生意维度诊断：分析销量/份额的趋势变化，识别增长瓶颈在哪些渠道、品类、价格带，定位&#39;量&#39;和&#39;价&#39;的问题分别来自哪里</li><li>用户维度诊断：分析消费者画像变化趋势，识别用户年龄结构是否趋老，品牌在消费者心中的标签属性（如时尚度、科技感、性价比等），以及标签是否存在负面迁移</li><li>价格维度诊断：梳理产品矩阵和价格带分布，判断是否存在均价下行压力或高端线销售占比不足，识别提价空间和目标</li><li>竞品维度交叉验证：将以上三个维度的发现与竞品同期表现对比，判断问题是行业性的还是品牌独有</li><li>战略破局提炼：综合三维度诊断，识别最关键的1-2个杠杆点，提出优先级明确的&#39;做什么→为什么→怎么做&#39;的战略方向</li></ol></div></div>
+                  <div class="field"><div class="field-label">Page structure<span class="zh">页面表达</span></div><div class="field-val"><ul><li><b>P1 · 品牌诊断框架</b><br><span class="note">展示品牌诊断的多维框架（生意/用户/价格三个维度），说明为什么要从这三个维度进行分析，以及各维度的诊断逻辑和判断标准</span></li><li><b>P2 · 维度一：生意表现</b><br><span class="note">展示品牌销量/份额的趋势变化，识别增长瓶颈的位置（渠道/品类/价格带）。可以用趋势图或对比表，核心是回答&#39;增长卡在哪里&#39;</span></li><li><b>P3 · 维度二：用户认知</b><br><span class="note">展示消费者品牌认知状况——用户画像是否趋老、品牌标签是否负面变化、品牌吸引力是否下降。有调研数据用数据，没有则用定性观察或渠道反馈</span></li><li><b>P4 · 维度三：价格结构</b><br><span class="note">展示产品矩阵与价格带分布，判断是否存在均价下行压力或高端线不足。核心是回答&#39;品牌是否有提价空间、在哪里提、消费者是否接受&#39;</span></li><li><b>P5 · 破局方向与优先级</b><br><span class="note">综合三维度诊断结论，识别最关键的战略杠杆点。按优先级列出破局方向，每个方向说明&#39;做什么→为什么是这个→预期效果&#39;</span></li></ul></div></div>
+                  <div class="field"><div class="field-label">Outputs<span class="zh">预期输出</span></div><div class="field-val"><ul><li>三维品牌健康度诊断报告</li><li>品牌问题优先级矩阵</li><li>战略破局方向与关键行动建议</li><li>品类增长空间与品牌可达目标</li></ul></div></div>
+                  <div class="field"><div class="field-label">Failure modes<span class="zh">失效模式</span></div><div class="field-val"><ul><li>诊断维度过于全面但没有优先级排序，战略方向不聚焦</li><li>将现象误判为根源（如将&#39;增长慢&#39;归因于单一因素）</li><li>数据维度不够导致结论偏差</li><li>诊断结论过于悲观或乐观，缺乏平衡视角</li></ul></div></div>
+                  <div class="field"><div class="field-label">Boundaries<span class="zh">适用边界</span></div><div class="field-val"><ul><li>诊断需要多源数据验证，单一数据源的结论置信度应标注</li><li>跨品类应用时，品类增长阶段不同（导入期vs成熟期）诊断焦点应调整</li></ul></div></div>
+                  <div class="field"><div class="field-label">Evidence<span class="zh">案例证据</span></div><div class="field-val"><p>源自某运动品牌健步系列（增长乏力+老年人标签+价格提升需求）和某童装品牌升级（增速放缓+核心业务指标下滑+客群老化+产品力欠佳）两个案例的共同诊断框架</p></div></div>
+                  <div class="field"><div class="field-label">Variant<span class="zh">变体与参考</span></div><div class="field-val"><div class="variants"><div class="variant"><p class="variant-name">品类进入的五步市场分析链</p><div class="sublabel">适用条件</div><ul><li>品牌考虑进入一个已有一定规模但自身尚未涉足的品类</li><li>需系统评估品类进入吸引力和可行性</li><li>品类中已有清晰竞争分层</li></ul><div class="sublabel">操作步骤</div><ol class="steps"><li>扫描目标品类整体规模、增速和品类生命周期阶段</li><li>分解品类结构：识别各子品类规模占比、增长动力和消费者渗透率</li><li>捕捉推动品类增长的关键消费趋势并评估可持续性</li><li>分层竞争格局：按国际品牌/本土大众/新兴DTC/跨界品牌四类竞争者分层</li><li>对照品牌自身资产，判断品牌在品类中的独特进入位置</li></ol></div></div></div></div>
+                </div>
+                <div class="idline">
+                  <span>lens_mod_brand-strategy-1387cea5</span>
+                  <button class="copybtn" type="button" data-copy="lens_mod_brand-strategy-1387cea5">复制 ID</button>
+                  <span>lenses/lens_mod_brand-strategy-1387cea5.md · 更新 2026-07-28</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </article>
+        <article class="lens" id="lens_f6fb9d9959c05718007d5922c02e9835" data-search="三维差异化赛道定位法 
+ 如何在竞争激烈的品类中，通过人群×场景×功能利益三个维度系统定义品牌的差异化赛道？ 
+ 品类竞争格局已形成多赛道分化，可清晰识别各赛道品牌密度 
+ 存在可量化的消费趋势数据支撑差异化方向选择 
+ 品牌有能力覆盖所选择的差异化人群和场景 
+ 差异化功能利益组合需要品牌确实具备对应的产品能力 
+ 品类尚未形成明显的赛道分化 
+ 品牌资源不足以同时覆盖差异化人群和场景 
+ 差异化方向缺乏数据支撑，仅基于主观判断 
+ 品类竞争格局数据（品牌分布/价格带/目标人群） 
+ 消费者细分人群的增长趋势数据 
+ 消费者使用场景和需求调研 
+ 品牌自身产品能力和技术优势清单 
+ 绘制品类竞争格局图谱，标记各赛道品牌密度和空白区域 
+ 从人群维度定义差异化：选择被竞品忽视或服务不足的消费者群体 
+ 从场景维度定义差异化：选择与品牌能力匹配、增长潜力大的使用场景 
+ 从功能利益维度定义差异化：组合品牌核心功能优势，形成竞品难以简单复制的利益组合 
+ 将三个差异化维度聚焦为一个简洁可传播的定位表述 
+ 品类竞争格局图谱 
+ 差异化人群×场景×功能利益三维矩阵 
+ 品牌差异化赛道定位表述 
+ 差异化赛道的市场空间估算 
+  
+ 背景与问题 如何在竞争激烈的品类中，通过人群×场景×功能利益三个维度系统定义品牌的差异化赛道？ 
+ 操作步骤 绘制品类竞争格局图谱，标记各赛道品牌密度和空白区域
+从人群维度定义差异化：选择被竞品忽视或服务不足的消费者群体
+从场景维度定义差异化：选择与品牌能力匹配、增长潜力大的使用场景
+从功能利益维度定义差异化：组合品牌核心功能优势，形成竞品难以简单复制的利益组合
+将三个差异化维度聚焦为一个简洁可传播的定位表述 
+ 输出成果 品类竞争格局图谱
+差异化人群×场景×功能利益三维矩阵
+品牌差异化赛道定位表述
+差异化赛道的市场空间估算 
+ lens_f6fb9d9959c05718007d5922c02e9835" data-name="三维差异化赛道定位法" data-q="如何在竞争激烈的品类中，通过人群×场景×功能利益三个维度系统定义品牌的差异化赛道？">
+          <button class="lens-head" type="button" aria-expanded="false" aria-controls="lens_f6fb9d9959c05718007d5922c02e9835-body">
+            <span class="lens-no">03</span>
+            <span class="lens-text">
+              <span class="lens-name">三维差异化赛道定位法</span>
+              <span class="lens-q">如何在竞争激烈的品类中，通过人群×场景×功能利益三个维度系统定义品牌的差异化赛道？</span>
+              <span class="lens-flags"><span class="flag ">已确认</span><span class="flag">5 步</span><span class="flag flag-accent">3 页表达</span></span>
+            </span>
+            <span class="toggle-mark" aria-hidden="true"></span>
+          </button>
+          <div class="lens-body" id="lens_f6fb9d9959c05718007d5922c02e9835-body">
+            <div class="lens-body-inner">
+              <div class="lens-body-content">
+                <div class="fields">
+                  <div class="field"><div class="field-label">Use when<span class="zh">适用条件</span></div><div class="field-val"><ul><li>品类竞争格局已形成多赛道分化，可清晰识别各赛道品牌密度</li><li>存在可量化的消费趋势数据支撑差异化方向选择</li><li>品牌有能力覆盖所选择的差异化人群和场景</li><li>差异化功能利益组合需要品牌确实具备对应的产品能力</li></ul></div></div>
+                  <div class="field"><div class="field-label">Skip when<span class="zh">跳过条件</span></div><div class="field-val"><ul><li>品类尚未形成明显的赛道分化</li><li>品牌资源不足以同时覆盖差异化人群和场景</li><li>差异化方向缺乏数据支撑，仅基于主观判断</li></ul></div></div>
+                  <div class="field"><div class="field-label">Inputs<span class="zh">所需输入</span></div><div class="field-val"><ul><li>品类竞争格局数据（品牌分布/价格带/目标人群）</li><li>消费者细分人群的增长趋势数据</li><li>消费者使用场景和需求调研</li><li>品牌自身产品能力和技术优势清单</li></ul></div></div>
+                  <div class="field"><div class="field-label">Operations<span class="zh">操作步骤</span></div><div class="field-val"><ol class="steps"><li>绘制品类竞争格局图谱，标记各赛道品牌密度和空白区域</li><li>从人群维度定义差异化：选择被竞品忽视或服务不足的消费者群体</li><li>从场景维度定义差异化：选择与品牌能力匹配、增长潜力大的使用场景</li><li>从功能利益维度定义差异化：组合品牌核心功能优势，形成竞品难以简单复制的利益组合</li><li>将三个差异化维度聚焦为一个简洁可传播的定位表述</li></ol></div></div>
+                  <div class="field"><div class="field-label">Page structure<span class="zh">页面表达</span></div><div class="field-val"><ul><li><b>P1 · 背景与问题</b><br><span class="note">如何在竞争激烈的品类中，通过人群×场景×功能利益三个维度系统定义品牌的差异化赛道？</span></li><li><b>P2 · 操作步骤</b><br><span class="note">绘制品类竞争格局图谱，标记各赛道品牌密度和空白区域
+从人群维度定义差异化：选择被竞品忽视或服务不足的消费者群体
+从场景维度定义差异化：选择与品牌能力匹配、增长潜力大的使用场景
+从功能利益维度定义差异化：组合品牌核心功能优势，形成竞品难以简单复制的利益组合
+将三个差异化维度聚焦为一个简洁可传播的定位表述</span></li><li><b>P3 · 输出成果</b><br><span class="note">品类竞争格局图谱
+差异化人群×场景×功能利益三维矩阵
+品牌差异化赛道定位表述
+差异化赛道的市场空间估算</span></li></ul></div></div>
+                  <div class="field"><div class="field-label">Outputs<span class="zh">预期输出</span></div><div class="field-val"><ul><li>品类竞争格局图谱</li><li>差异化人群×场景×功能利益三维矩阵</li><li>品牌差异化赛道定位表述</li><li>差异化赛道的市场空间估算</li></ul></div></div>
+                  
+                  
+                  <div class="field"><div class="field-label">Evidence<span class="zh">案例证据</span></div><div class="field-val"><p class="muted">未附案例证据说明。</p></div></div>
+                  
+                </div>
+                <div class="idline">
+                  <span>lens_f6fb9d9959c05718007d5922c02e9835</span>
+                  <button class="copybtn" type="button" data-copy="lens_f6fb9d9959c05718007d5922c02e9835">复制 ID</button>
+                  <span>lenses/lens_f6fb9d9959c05718007d5922c02e9835.md · 更新 2026-07-28</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </article>
+        <article class="lens" id="lens_4995b35956a2afe4fcbac5150b471b69" data-search="消费者价值观×品牌能力交叉锚点式品牌主张推导法 
+ 如何将消费者深层价值观与品牌核心能力在同一个概念锚点上交叉，推导出既有情感共鸣又具品类差异化的品牌主张？ 
+ 品牌已有一定历史沉淀，有可提炼的差异化资产 
+ 有深度的消费者定性洞察数据，了解其价值观和生活方式 
+ 品牌面临重新定位或升级需求 
+ 品类中存在多个品牌但缺乏鲜明的情感定位 
+ 品牌为新创品牌，缺乏历史资产可提炼 
+ 消费者洞察仅停留在功能需求层面，缺乏价值观数据 
+ 品类为纯功能性品类，情感定位对购买决策影响极小 
+ 目标消费者定性洞察（价值观/生活方式/教育理念/消费态度） 
+ 品牌历史资产与核心能力梳理（年限/专长/技术/口碑） 
+ 竞品品牌定位与主张清单 
+ 品类消费者核心需求定量调研数据 
+ 从消费者定性洞察中提炼核心价值观表述（如&#39;顺从天性、舒服自然&#39;） 
+ 从品牌历史和能力中提炼差异化竞争优势清单 
+ 寻找消费者价值观与品牌能力的交叉锚点概念（单一关键词或短语） 
+ 从锚点概念延伸出可差异化的品牌场景或风格领域 
+ 将定位转化为简洁可传播的品牌主张语词 
+ 构建品牌屋：从使命→愿景→主张→个性→风格→竞争力→利益→洞察→受众的完整层级结构 
+ 消费者核心价值观提炼 
+ 品牌差异化能力清单 
+ 交叉锚点概念及推导逻辑 
+ 品牌主张语词 
+ 完整品牌屋架构图 
+  
+ 背景与问题 如何将消费者深层价值观与品牌核心能力在同一个概念锚点上交叉，推导出既有情感共鸣又具品类差异化的品牌主张？ 
+ 操作步骤 从消费者定性洞察中提炼核心价值观表述（如&#39;顺从天性、舒服自然&#39;）
+从品牌历史和能力中提炼差异化竞争优势清单
+寻找消费者价值观与品牌能力的交叉锚点概念（单一关键词或短语）
+从锚点概念延伸出可差异化的品牌场景或风格领域
+将定位转化为简洁可传播的品牌主张语词
+构建品牌屋：从使命→愿景→主张→个性→风格→竞争力→利益→洞察→受众的完整层级结构 
+ 输出成果 消费者核心价值观提炼
+品牌差异化能力清单
+交叉锚点概念及推导逻辑
+品牌主张语词
+完整品牌屋架构图 
+ lens_4995b35956a2afe4fcbac5150b471b69" data-name="消费者价值观×品牌能力交叉锚点式品牌主张推导法" data-q="如何将消费者深层价值观与品牌核心能力在同一个概念锚点上交叉，推导出既有情感共鸣又具品类差异化的品牌主张？">
+          <button class="lens-head" type="button" aria-expanded="false" aria-controls="lens_4995b35956a2afe4fcbac5150b471b69-body">
+            <span class="lens-no">04</span>
+            <span class="lens-text">
+              <span class="lens-name">消费者价值观×品牌能力交叉锚点式品牌主张推导法</span>
+              <span class="lens-q">如何将消费者深层价值观与品牌核心能力在同一个概念锚点上交叉，推导出既有情感共鸣又具品类差异化的品牌主张？</span>
+              <span class="lens-flags"><span class="flag ">已确认</span><span class="flag">6 步</span><span class="flag flag-accent">3 页表达</span></span>
+            </span>
+            <span class="toggle-mark" aria-hidden="true"></span>
+          </button>
+          <div class="lens-body" id="lens_4995b35956a2afe4fcbac5150b471b69-body">
+            <div class="lens-body-inner">
+              <div class="lens-body-content">
+                <div class="fields">
+                  <div class="field"><div class="field-label">Use when<span class="zh">适用条件</span></div><div class="field-val"><ul><li>品牌已有一定历史沉淀，有可提炼的差异化资产</li><li>有深度的消费者定性洞察数据，了解其价值观和生活方式</li><li>品牌面临重新定位或升级需求</li><li>品类中存在多个品牌但缺乏鲜明的情感定位</li></ul></div></div>
+                  <div class="field"><div class="field-label">Skip when<span class="zh">跳过条件</span></div><div class="field-val"><ul><li>品牌为新创品牌，缺乏历史资产可提炼</li><li>消费者洞察仅停留在功能需求层面，缺乏价值观数据</li><li>品类为纯功能性品类，情感定位对购买决策影响极小</li></ul></div></div>
+                  <div class="field"><div class="field-label">Inputs<span class="zh">所需输入</span></div><div class="field-val"><ul><li>目标消费者定性洞察（价值观/生活方式/教育理念/消费态度）</li><li>品牌历史资产与核心能力梳理（年限/专长/技术/口碑）</li><li>竞品品牌定位与主张清单</li><li>品类消费者核心需求定量调研数据</li></ul></div></div>
+                  <div class="field"><div class="field-label">Operations<span class="zh">操作步骤</span></div><div class="field-val"><ol class="steps"><li>从消费者定性洞察中提炼核心价值观表述（如&#39;顺从天性、舒服自然&#39;）</li><li>从品牌历史和能力中提炼差异化竞争优势清单</li><li>寻找消费者价值观与品牌能力的交叉锚点概念（单一关键词或短语）</li><li>从锚点概念延伸出可差异化的品牌场景或风格领域</li><li>将定位转化为简洁可传播的品牌主张语词</li><li>构建品牌屋：从使命→愿景→主张→个性→风格→竞争力→利益→洞察→受众的完整层级结构</li></ol></div></div>
+                  <div class="field"><div class="field-label">Page structure<span class="zh">页面表达</span></div><div class="field-val"><ul><li><b>P1 · 背景与问题</b><br><span class="note">如何将消费者深层价值观与品牌核心能力在同一个概念锚点上交叉，推导出既有情感共鸣又具品类差异化的品牌主张？</span></li><li><b>P2 · 操作步骤</b><br><span class="note">从消费者定性洞察中提炼核心价值观表述（如&#39;顺从天性、舒服自然&#39;）
+从品牌历史和能力中提炼差异化竞争优势清单
+寻找消费者价值观与品牌能力的交叉锚点概念（单一关键词或短语）
+从锚点概念延伸出可差异化的品牌场景或风格领域
+将定位转化为简洁可传播的品牌主张语词
+构建品牌屋：从使命→愿景→主张→个性→风格→竞争力→利益→洞察→受众的完整层级结构</span></li><li><b>P3 · 输出成果</b><br><span class="note">消费者核心价值观提炼
+品牌差异化能力清单
+交叉锚点概念及推导逻辑
+品牌主张语词
+完整品牌屋架构图</span></li></ul></div></div>
+                  <div class="field"><div class="field-label">Outputs<span class="zh">预期输出</span></div><div class="field-val"><ul><li>消费者核心价值观提炼</li><li>品牌差异化能力清单</li><li>交叉锚点概念及推导逻辑</li><li>品牌主张语词</li><li>完整品牌屋架构图</li></ul></div></div>
+                  
+                  
+                  <div class="field"><div class="field-label">Evidence<span class="zh">案例证据</span></div><div class="field-val"><p class="muted">未附案例证据说明。</p></div></div>
+                  
+                </div>
+                <div class="idline">
+                  <span>lens_4995b35956a2afe4fcbac5150b471b69</span>
+                  <button class="copybtn" type="button" data-copy="lens_4995b35956a2afe4fcbac5150b471b69">复制 ID</button>
+                  <span>lenses/lens_4995b35956a2afe4fcbac5150b471b69.md · 更新 2026-07-28</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </article>
+        <article class="lens" id="lens_44a864116212157f7a314fe0511e187f" data-search="反向定义式品牌理念构建法 
+ 当品类主流话语已形成固定范式时，如何从主流话语的反面出发，构建一个既有差异化又有消费者共鸣的品牌新理念？ 
+ 品类主流话语已形成固定范式，品牌难以在该范式内建立差异化 
+ 存在可捕捉的宏观社会文化趋势，且与品类使用场景相关 
+ 品牌产品具有与主流话语形成对比的差异化功能特征 
+ 品牌有足够的产品线宽度以支撑矩阵结构 
+ 品类主流话语尚未固化，品牌仍有在主流范式内差异化空间 
+ 品牌产品与主流产品无明显功能差异 
+ 宏观趋势与品类使用场景关联度低 
+ 主流品类话语与价值取向分析（竞品传播主张/行业术语/消费者认知调研） 
+ 宏观社会文化趋势洞察（社会情绪/生活方式变迁/价值观转变） 
+ 品牌产品功能矩阵与差异化特征描述 
+ 品类消费者使用场景清单 
+ 识别主流品类文化中的核心话语与价值取向（如竞技/对抗/专业成绩） 
+ 分析宏观社会文化趋势，发现被主流话语忽视的消费者需求（如压力时代对舒适的渴望） 
+ 提出与主流话语形成对比的品牌新理念命名 
+ 从产品维度定义新理念：描述产品设计原则与使用体验区别于主流的特征 
+ 从使用场景/项目维度定义新理念：列举符合新理念的具体活动类型 
+ 从人群维度定义新理念：描述新理念所服务的人群特征与准入门槛 
+ 将现有产品线按新理念重新归类为矩阵结构，形成完整的产品×理念映射 
+ 品牌新理念命名与一句话定义 
+ 产品维度定义（设计原则+体验特征） 
+ 项目/场景维度定义（活动类型清单） 
+ 人群维度定义（人群特征+准入门槛） 
+ 产品线×新理念矩阵 
+  
+ 背景与问题 当品类主流话语已形成固定范式时，如何从主流话语的反面出发，构建一个既有差异化又有消费者共鸣的品牌新理念？ 
+ 操作步骤 识别主流品类文化中的核心话语与价值取向（如竞技/对抗/专业成绩）
+分析宏观社会文化趋势，发现被主流话语忽视的消费者需求（如压力时代对舒适的渴望）
+提出与主流话语形成对比的品牌新理念命名
+从产品维度定义新理念：描述产品设计原则与使用体验区别于主流的特征
+从使用场景/项目维度定义新理念：列举符合新理念的具体活动类型
+从人群维度定义新理念：描述新理念所服务的人群特征与准入门槛
+将现有产品线按新理念重新归类为矩阵结构，形成完整的产品×理念映射 
+ 输出成果 品牌新理念命名与一句话定义
+产品维度定义（设计原则+体验特征）
+项目/场景维度定义（活动类型清单）
+人群维度定义（人群特征+准入门槛）
+产品线×新理念矩阵 
+ lens_44a864116212157f7a314fe0511e187f" data-name="反向定义式品牌理念构建法" data-q="当品类主流话语已形成固定范式时，如何从主流话语的反面出发，构建一个既有差异化又有消费者共鸣的品牌新理念？">
+          <button class="lens-head" type="button" aria-expanded="false" aria-controls="lens_44a864116212157f7a314fe0511e187f-body">
+            <span class="lens-no">05</span>
+            <span class="lens-text">
+              <span class="lens-name">反向定义式品牌理念构建法</span>
+              <span class="lens-q">当品类主流话语已形成固定范式时，如何从主流话语的反面出发，构建一个既有差异化又有消费者共鸣的品牌新理念？</span>
+              <span class="lens-flags"><span class="flag ">已确认</span><span class="flag">7 步</span><span class="flag flag-accent">3 页表达</span></span>
+            </span>
+            <span class="toggle-mark" aria-hidden="true"></span>
+          </button>
+          <div class="lens-body" id="lens_44a864116212157f7a314fe0511e187f-body">
+            <div class="lens-body-inner">
+              <div class="lens-body-content">
+                <div class="fields">
+                  <div class="field"><div class="field-label">Use when<span class="zh">适用条件</span></div><div class="field-val"><ul><li>品类主流话语已形成固定范式，品牌难以在该范式内建立差异化</li><li>存在可捕捉的宏观社会文化趋势，且与品类使用场景相关</li><li>品牌产品具有与主流话语形成对比的差异化功能特征</li><li>品牌有足够的产品线宽度以支撑矩阵结构</li></ul></div></div>
+                  <div class="field"><div class="field-label">Skip when<span class="zh">跳过条件</span></div><div class="field-val"><ul><li>品类主流话语尚未固化，品牌仍有在主流范式内差异化空间</li><li>品牌产品与主流产品无明显功能差异</li><li>宏观趋势与品类使用场景关联度低</li></ul></div></div>
+                  <div class="field"><div class="field-label">Inputs<span class="zh">所需输入</span></div><div class="field-val"><ul><li>主流品类话语与价值取向分析（竞品传播主张/行业术语/消费者认知调研）</li><li>宏观社会文化趋势洞察（社会情绪/生活方式变迁/价值观转变）</li><li>品牌产品功能矩阵与差异化特征描述</li><li>品类消费者使用场景清单</li></ul></div></div>
+                  <div class="field"><div class="field-label">Operations<span class="zh">操作步骤</span></div><div class="field-val"><ol class="steps"><li>识别主流品类文化中的核心话语与价值取向（如竞技/对抗/专业成绩）</li><li>分析宏观社会文化趋势，发现被主流话语忽视的消费者需求（如压力时代对舒适的渴望）</li><li>提出与主流话语形成对比的品牌新理念命名</li><li>从产品维度定义新理念：描述产品设计原则与使用体验区别于主流的特征</li><li>从使用场景/项目维度定义新理念：列举符合新理念的具体活动类型</li><li>从人群维度定义新理念：描述新理念所服务的人群特征与准入门槛</li><li>将现有产品线按新理念重新归类为矩阵结构，形成完整的产品×理念映射</li></ol></div></div>
+                  <div class="field"><div class="field-label">Page structure<span class="zh">页面表达</span></div><div class="field-val"><ul><li><b>P1 · 背景与问题</b><br><span class="note">当品类主流话语已形成固定范式时，如何从主流话语的反面出发，构建一个既有差异化又有消费者共鸣的品牌新理念？</span></li><li><b>P2 · 操作步骤</b><br><span class="note">识别主流品类文化中的核心话语与价值取向（如竞技/对抗/专业成绩）
+分析宏观社会文化趋势，发现被主流话语忽视的消费者需求（如压力时代对舒适的渴望）
+提出与主流话语形成对比的品牌新理念命名
+从产品维度定义新理念：描述产品设计原则与使用体验区别于主流的特征
+从使用场景/项目维度定义新理念：列举符合新理念的具体活动类型
+从人群维度定义新理念：描述新理念所服务的人群特征与准入门槛
+将现有产品线按新理念重新归类为矩阵结构，形成完整的产品×理念映射</span></li><li><b>P3 · 输出成果</b><br><span class="note">品牌新理念命名与一句话定义
+产品维度定义（设计原则+体验特征）
+项目/场景维度定义（活动类型清单）
+人群维度定义（人群特征+准入门槛）
+产品线×新理念矩阵</span></li></ul></div></div>
+                  <div class="field"><div class="field-label">Outputs<span class="zh">预期输出</span></div><div class="field-val"><ul><li>品牌新理念命名与一句话定义</li><li>产品维度定义（设计原则+体验特征）</li><li>项目/场景维度定义（活动类型清单）</li><li>人群维度定义（人群特征+准入门槛）</li><li>产品线×新理念矩阵</li></ul></div></div>
+                  
+                  
+                  <div class="field"><div class="field-label">Evidence<span class="zh">案例证据</span></div><div class="field-val"><p class="muted">未附案例证据说明。</p></div></div>
+                  
+                </div>
+                <div class="idline">
+                  <span>lens_44a864116212157f7a314fe0511e187f</span>
+                  <button class="copybtn" type="button" data-copy="lens_44a864116212157f7a314fe0511e187f">复制 ID</button>
+                  <span>lenses/lens_44a864116212157f7a314fe0511e187f.md · 更新 2026-07-28</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </article>
+        <article class="lens" id="lens_brand-system-from-insight" data-search="从消费者洞察构建品牌核心体系 
+ 如何在消费者洞察与品牌资产之间找到共鸣点构建定位体系？ 
+ 品牌体系构建 
+ 品牌定位推导 
+ 洞察提供清晰共鸣点 
+ 品牌有丰富全球资产 
+ 需重建消费者认知 
+ 品牌已有成熟本土定位 
+ 洞察不足以支撑重建 
+ 问题诊断输出 
+ 消费者洞察输出 
+ 品牌全球资产 
+ 提炼品牌精神本土化诠释 
+ 构建体系：定位→使命→愿景→价值观 
+ 建立品牌金字塔 
+ 撰写品牌宣言 
+ 开发本土化口号 
+ 撰写品牌故事 
+ 精神诠释 
+ 品牌体系 
+ 品牌金字塔 
+ 品牌宣言 
+ 本土化口号 
+ 品牌故事 
+ 体系各层逻辑断裂 
+ 口号只是翻译 
+ 宣言过于通用 
+ 需要诊断和洞察完成后才可启动 
+ 不替代全球品牌定位决策 
+  
+ 精神共鸣点提炼 从洞察提取品牌与消费者的共鸣交集
+回答：品牌精神与消费者的共鸣点在哪？
+证据：洞察结论；全球资产 
+ 品牌基础体系 建立完整的品牌定位/使命/愿景/价值观
+回答：定位/使命/愿景/价值观是什么？
+证据：共鸣点；品牌能力；竞争 
+ lens_brand-system-from-insight" data-name="从消费者洞察构建品牌核心体系" data-q="如何在消费者洞察与品牌资产之间找到共鸣点构建定位体系？">
+          <button class="lens-head" type="button" aria-expanded="false" aria-controls="lens_brand-system-from-insight-body">
+            <span class="lens-no">06</span>
+            <span class="lens-text">
+              <span class="lens-name">从消费者洞察构建品牌核心体系</span>
+              <span class="lens-q">如何在消费者洞察与品牌资产之间找到共鸣点构建定位体系？</span>
+              <span class="lens-flags"><span class="flag ">已确认</span><span class="flag">6 步</span><span class="flag flag-accent">2 页表达</span></span>
+            </span>
+            <span class="toggle-mark" aria-hidden="true"></span>
+          </button>
+          <div class="lens-body" id="lens_brand-system-from-insight-body">
+            <div class="lens-body-inner">
+              <div class="lens-body-content">
+                <div class="fields">
+                  <div class="field"><div class="field-label">Use when<span class="zh">适用条件</span></div><div class="field-val"><ul><li>洞察提供清晰共鸣点</li><li>品牌有丰富全球资产</li><li>需重建消费者认知</li></ul></div></div>
+                  <div class="field"><div class="field-label">Skip when<span class="zh">跳过条件</span></div><div class="field-val"><ul><li>品牌已有成熟本土定位</li><li>洞察不足以支撑重建</li></ul></div></div>
+                  <div class="field"><div class="field-label">Inputs<span class="zh">所需输入</span></div><div class="field-val"><ul><li>问题诊断输出</li><li>消费者洞察输出</li><li>品牌全球资产</li></ul></div></div>
+                  <div class="field"><div class="field-label">Operations<span class="zh">操作步骤</span></div><div class="field-val"><ol class="steps"><li>提炼品牌精神本土化诠释</li><li>构建体系：定位→使命→愿景→价值观</li><li>建立品牌金字塔</li><li>撰写品牌宣言</li><li>开发本土化口号</li><li>撰写品牌故事</li></ol></div></div>
+                  <div class="field"><div class="field-label">Page structure<span class="zh">页面表达</span></div><div class="field-val"><ul><li><b>P1 · 精神共鸣点提炼</b><br><span class="note">从洞察提取品牌与消费者的共鸣交集
+回答：品牌精神与消费者的共鸣点在哪？
+证据：洞察结论；全球资产</span></li><li><b>P2 · 品牌基础体系</b><br><span class="note">建立完整的品牌定位/使命/愿景/价值观
+回答：定位/使命/愿景/价值观是什么？
+证据：共鸣点；品牌能力；竞争</span></li></ul></div></div>
+                  <div class="field"><div class="field-label">Outputs<span class="zh">预期输出</span></div><div class="field-val"><ul><li>精神诠释</li><li>品牌体系</li><li>品牌金字塔</li><li>品牌宣言</li><li>本土化口号</li><li>品牌故事</li></ul></div></div>
+                  <div class="field"><div class="field-label">Failure modes<span class="zh">失效模式</span></div><div class="field-val"><ul><li>体系各层逻辑断裂</li><li>口号只是翻译</li><li>宣言过于通用</li></ul></div></div>
+                  <div class="field"><div class="field-label">Boundaries<span class="zh">适用边界</span></div><div class="field-val"><ul><li>需要诊断和洞察完成后才可启动</li><li>不替代全球品牌定位决策</li></ul></div></div>
+                  <div class="field"><div class="field-label">Evidence<span class="zh">案例证据</span></div><div class="field-val"><p class="muted">未附案例证据说明。</p></div></div>
+                  
+                </div>
+                <div class="idline">
+                  <span>lens_brand-system-from-insight</span>
+                  <button class="copybtn" type="button" data-copy="lens_brand-system-from-insight">复制 ID</button>
+                  <span>lenses/lens_brand-system-from-insight.md · 更新 2026-07-28</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </article>
+        <article class="lens" id="lens_v10-brand-spirit-localization" data-search="全球品牌精神的本土化转译与策略系统构建法 
+ 如何将品牌的全球核心精神，通过对照本地消费者的文化需求和话语方式，转化为一套有本土共鸣的策略体系（核心主张+策略支柱+全触点设计）？ 
+ 品牌是国际品牌或拥有明确的全球品牌定位 
+ 品牌需要在本地市场进行深度定位本土化 
+ 有足够的本地消费者文化洞察作为转译依据 
+ 品牌的全球精神是具体的、有内容的 
+ 品牌的全球定位本身模糊或不存在有意义的可转译内容 
+ 本地市场与全球市场高度同质化 
+ 项目仅需要产品层面本土化 
+ 品牌全球核心精神阐述和核心价值观 
+ 本地消费者文化洞察和核心心理需求 
+ 竞品差异化空间分析结果 
+ 品牌全球与本地市场差距诊断 
+ 提取品牌全球精神中具有跨文化通用性的核心概念，标注「不可放弃的根基」与「可做本地表达的素材」 
+ 识别本地消费者文化需求中与全球精神可共鸣的部分，找到概念交集 
+ 在交集中定义本土化核心主张：既关联全球精神又能在本地语境中独立成立 
+ 将核心主张拆解为3-4个策略支柱 
+ 为每个策略支柱设计品牌触点：产品/空间/内容/事件四个维度 
+ 做完整性自检：触点覆盖关键接触时刻，策略支柱间有逻辑关联 
+ 全球精神可迁移性分析 
+ 本地文化共鸣点映射 
+ 本土化核心主张 
+ 策略支柱体系（含每个支柱的落地触点设计） 
+ 品牌触点全景图 
+ 本土化主张仅是global slogan翻译而没有在本地语境中重新定义 
+ 策略支柱变成口号堆砌，各支柱间无逻辑关系 
+ 触点设计变成清单罗列而缺乏与策略支柱的对应关系 
+  
+ 从全球精神到本土主张：展示概念交集的形成过程和最终核心主张 从全球精神到本土主张：展示概念交集的形成过程和最终核心主张
+回答：品牌的全球精神中哪些可跨文化？本地消费者在乎什么？交集中可形成怎样的本土化核心主张？
+证据：品牌全球精神阐述；本地消费者文化需求数据；概念交集分析；候选主张和选择理由 
+ 将核心主张拆解为可操作的策略支柱体系和全触点设计 将核心主张拆解为可操作的策略支柱体系和全触点设计
+回答：这个核心主张在实际中长什么样？品牌需要扮演什么角色、用什么话语、在哪些触点落地？
+证据：每个策略支柱的消费者需求依据；各触点的消费者接触时刻数据；同类品牌的最佳实践 
+ lens_v10-brand-spirit-localization" data-name="全球品牌精神的本土化转译与策略系统构建法" data-q="如何将品牌的全球核心精神，通过对照本地消费者的文化需求和话语方式，转化为一套有本土共鸣的策略体系（核心主张+策略支柱+全触点设计）？">
+          <button class="lens-head" type="button" aria-expanded="false" aria-controls="lens_v10-brand-spirit-localization-body">
+            <span class="lens-no">07</span>
+            <span class="lens-text">
+              <span class="lens-name">全球品牌精神的本土化转译与策略系统构建法</span>
+              <span class="lens-q">如何将品牌的全球核心精神，通过对照本地消费者的文化需求和话语方式，转化为一套有本土共鸣的策略体系（核心主张+策略支柱+全触点设计）？</span>
+              <span class="lens-flags"><span class="flag ">已确认</span><span class="flag">6 步</span><span class="flag flag-accent">2 页表达</span></span>
+            </span>
+            <span class="toggle-mark" aria-hidden="true"></span>
+          </button>
+          <div class="lens-body" id="lens_v10-brand-spirit-localization-body">
+            <div class="lens-body-inner">
+              <div class="lens-body-content">
+                <div class="fields">
+                  <div class="field"><div class="field-label">Use when<span class="zh">适用条件</span></div><div class="field-val"><ul><li>品牌是国际品牌或拥有明确的全球品牌定位</li><li>品牌需要在本地市场进行深度定位本土化</li><li>有足够的本地消费者文化洞察作为转译依据</li><li>品牌的全球精神是具体的、有内容的</li></ul></div></div>
+                  <div class="field"><div class="field-label">Skip when<span class="zh">跳过条件</span></div><div class="field-val"><ul><li>品牌的全球定位本身模糊或不存在有意义的可转译内容</li><li>本地市场与全球市场高度同质化</li><li>项目仅需要产品层面本土化</li></ul></div></div>
+                  <div class="field"><div class="field-label">Inputs<span class="zh">所需输入</span></div><div class="field-val"><ul><li>品牌全球核心精神阐述和核心价值观</li><li>本地消费者文化洞察和核心心理需求</li><li>竞品差异化空间分析结果</li><li>品牌全球与本地市场差距诊断</li></ul></div></div>
+                  <div class="field"><div class="field-label">Operations<span class="zh">操作步骤</span></div><div class="field-val"><ol class="steps"><li>提取品牌全球精神中具有跨文化通用性的核心概念，标注「不可放弃的根基」与「可做本地表达的素材」</li><li>识别本地消费者文化需求中与全球精神可共鸣的部分，找到概念交集</li><li>在交集中定义本土化核心主张：既关联全球精神又能在本地语境中独立成立</li><li>将核心主张拆解为3-4个策略支柱</li><li>为每个策略支柱设计品牌触点：产品/空间/内容/事件四个维度</li><li>做完整性自检：触点覆盖关键接触时刻，策略支柱间有逻辑关联</li></ol></div></div>
+                  <div class="field"><div class="field-label">Page structure<span class="zh">页面表达</span></div><div class="field-val"><ul><li><b>P1 · 从全球精神到本土主张：展示概念交集的形成过程和最终核心主张</b><br><span class="note">从全球精神到本土主张：展示概念交集的形成过程和最终核心主张
+回答：品牌的全球精神中哪些可跨文化？本地消费者在乎什么？交集中可形成怎样的本土化核心主张？
+证据：品牌全球精神阐述；本地消费者文化需求数据；概念交集分析；候选主张和选择理由</span></li><li><b>P2 · 将核心主张拆解为可操作的策略支柱体系和全触点设计</b><br><span class="note">将核心主张拆解为可操作的策略支柱体系和全触点设计
+回答：这个核心主张在实际中长什么样？品牌需要扮演什么角色、用什么话语、在哪些触点落地？
+证据：每个策略支柱的消费者需求依据；各触点的消费者接触时刻数据；同类品牌的最佳实践</span></li></ul></div></div>
+                  <div class="field"><div class="field-label">Outputs<span class="zh">预期输出</span></div><div class="field-val"><ul><li>全球精神可迁移性分析</li><li>本地文化共鸣点映射</li><li>本土化核心主张</li><li>策略支柱体系（含每个支柱的落地触点设计）</li><li>品牌触点全景图</li></ul></div></div>
+                  <div class="field"><div class="field-label">Failure modes<span class="zh">失效模式</span></div><div class="field-val"><ul><li>本土化主张仅是global slogan翻译而没有在本地语境中重新定义</li><li>策略支柱变成口号堆砌，各支柱间无逻辑关系</li><li>触点设计变成清单罗列而缺乏与策略支柱的对应关系</li></ul></div></div>
+                  
+                  <div class="field"><div class="field-label">Evidence<span class="zh">案例证据</span></div><div class="field-val"><p class="muted">未附案例证据说明。</p></div></div>
+                  
+                </div>
+                <div class="idline">
+                  <span>lens_v10-brand-spirit-localization</span>
+                  <button class="copybtn" type="button" data-copy="lens_v10-brand-spirit-localization">复制 ID</button>
+                  <span>lenses/lens_v10-brand-spirit-localization.md · 更新 2026-07-28</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </article></div>
+      </section>
+      <section class="module" id="mod_campaign-journey" style="--i:1">
+        <header class="module-head">
+          <div class="mod-no">M02</div>
+          <div>
+            <h2>传播战役与消费者旅程</h2>
+            <p class="mod-meta">
+              <span><code>mod_campaign-journey</code></span>
+              <span>4 个方法</span>
+            </p>
+            <p class="mod-decision">模块「传播战役与消费者旅程」共收录 4 个可复用方法，经跨案例验证和人工审阅。（版本 6.0.0 · 批准 2026-07-27）</p>
+            <ul class="precond"><li>项目需包含与传播战役与消费者旅程相关的分析材料</li><li>分析单元需通过B2分段验证</li></ul>
+          </div>
+        </header>
+        <div class="lenslist">
+        <article class="lens" id="lens_campaign-journey-001" data-search="平台ip合作匹配与campaign规划 
+ 如何将品牌营销节点与平台ip资源系统匹配，设计从背书到口碑到曝光的多层合作框架？ 
+ 品牌需要利用平台的ip资源（如电商节点ip、内容平台主题活动）进行整合营销 
+ 已有品牌年度核心主张和传播目标，可以对照规划ip合作 
+ 品牌预算或策略不支持ip合作的规模和复杂度 
+ 品牌年度核心主张与传播目标 
+ 平台可用ip资源列表 
+ 品牌全年营销节点日历 
+ 目标人群画像与触媒偏好 
+ 梳理品牌自身营销节点与平台ip资源的匹配点，按优先级排序 
+ 设计递进式ip合作框架：背书层（建立信任）→口碑层（扩大影响）→曝光层（规模化触达），明确各层目标和核心动作 
+ 规划三层执行方案：品牌官方层/kol层/ugc层，明确各层内容形式和资源分配 
+ 设计备选方案以应对ip资源变动，整合ip排期到品牌全年传播日历 
+ ip合作规划框架 
+ 全年campaign日历 
+ ip合作策略忽视品牌调性匹配度——单纯追求ip热度可能稀释品牌资产 
+ ip合作策略忽视品牌调性匹配度——单纯追求ip热度可能稀释品牌资产 
+  
+ 传播战役与消费者旅程：如何设计kol分层辐射圈，按人群分层设计差异化的传播活动？... 将目标人群按运动参与度分层（精英/运动健身/中轻度/非运动人群） 为每层设计差异化的传播活动和话题（专业种草/趣味挑战/社交话题/病毒传播） 设计品牌ip活动（如奇人三项）创造线上线下联动体验 通过统一的品牌主题整合各层传播 
+ lens_campaign-journey-001" data-name="平台IP合作匹配与Campaign规划" data-q="如何将品牌营销节点与平台IP资源系统匹配，设计从背书到口碑到曝光的多层合作框架？">
+          <button class="lens-head" type="button" aria-expanded="false" aria-controls="lens_campaign-journey-001-body">
+            <span class="lens-no">08</span>
+            <span class="lens-text">
+              <span class="lens-name">平台IP合作匹配与Campaign规划</span>
+              <span class="lens-q">如何将品牌营销节点与平台IP资源系统匹配，设计从背书到口碑到曝光的多层合作框架？</span>
+              <span class="lens-flags"><span class="flag ">已确认</span><span class="flag flag-accent">变体 1</span><span class="flag">4 步</span></span>
+            </span>
+            <span class="toggle-mark" aria-hidden="true"></span>
+          </button>
+          <div class="lens-body" id="lens_campaign-journey-001-body">
+            <div class="lens-body-inner">
+              <div class="lens-body-content">
+                <div class="fields">
+                  <div class="field"><div class="field-label">Use when<span class="zh">适用条件</span></div><div class="field-val"><ul><li>品牌需要利用平台的IP资源（如电商节点IP、内容平台主题活动）进行整合营销</li><li>已有品牌年度核心主张和传播目标，可以对照规划IP合作</li></ul></div></div>
+                  <div class="field"><div class="field-label">Skip when<span class="zh">跳过条件</span></div><div class="field-val"><ul><li>品牌预算或策略不支持IP合作的规模和复杂度</li></ul></div></div>
+                  <div class="field"><div class="field-label">Inputs<span class="zh">所需输入</span></div><div class="field-val"><ul><li>品牌年度核心主张与传播目标</li><li>平台可用IP资源列表</li><li>品牌全年营销节点日历</li><li>目标人群画像与触媒偏好</li></ul></div></div>
+                  <div class="field"><div class="field-label">Operations<span class="zh">操作步骤</span></div><div class="field-val"><ol class="steps"><li>梳理品牌自身营销节点与平台IP资源的匹配点，按优先级排序</li><li>设计递进式IP合作框架：背书层（建立信任）→口碑层（扩大影响）→曝光层（规模化触达），明确各层目标和核心动作</li><li>规划三层执行方案：品牌官方层/KOL层/UGC层，明确各层内容形式和资源分配</li><li>设计备选方案以应对IP资源变动，整合IP排期到品牌全年传播日历</li></ol></div></div>
+                  <div class="field"><div class="field-label">Page structure<span class="zh">页面表达</span></div><div class="field-val"><p class="muted">暂无页面表达结构（可按操作步骤推导）。</p></div></div>
+                  <div class="field"><div class="field-label">Outputs<span class="zh">预期输出</span></div><div class="field-val"><ul><li>IP合作规划框架</li><li>全年Campaign日历</li></ul></div></div>
+                  <div class="field"><div class="field-label">Failure modes<span class="zh">失效模式</span></div><div class="field-val"><ul><li>IP合作策略忽视品牌调性匹配度——单纯追求IP热度可能稀释品牌资产</li></ul></div></div>
+                  <div class="field"><div class="field-label">Boundaries<span class="zh">适用边界</span></div><div class="field-val"><ul><li>IP合作策略忽视品牌调性匹配度——单纯追求IP热度可能稀释品牌资产</li></ul></div></div>
+                  <div class="field"><div class="field-label">Evidence<span class="zh">案例证据</span></div><div class="field-val"><p class="muted">未附案例证据说明。</p></div></div>
+                  <div class="field"><div class="field-label">Variant<span class="zh">变体与参考</span></div><div class="field-val"><div class="variants"><div class="variant"><p class="variant-name">传播战役与消费者旅程：如何设计KOL分层辐射圈，按人群分层设计差异化的传播活动？...</p><div class="sublabel">适用条件</div><ul><li>品牌需要进行该模块相关的策略分析</li><li>有可获取的相关数据和消费者洞察</li></ul><div class="sublabel">操作步骤</div><ol class="steps"><li>将目标人群按运动参与度分层（精英/运动健身/中轻度/非运动人群）</li><li>为每层设计差异化的传播活动和话题（专业种草/趣味挑战/社交话题/病毒传播）</li><li>设计品牌IP活动（如奇人三项）创造线上线下联动体验</li><li>通过统一的品牌主题整合各层传播</li></ol></div></div></div></div>
+                </div>
+                <div class="idline">
+                  <span>lens_campaign-journey-001</span>
+                  <button class="copybtn" type="button" data-copy="lens_campaign-journey-001">复制 ID</button>
+                  <span>lenses/lens_campaign-journey-001.md · 更新 2026-07-27</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </article>
+        <article class="lens" id="lens_campaign-journey-002" data-search="消费者决策路径与传播链路设计 
+ 如何基于消费者从认知到购买的完整决策路径，为每个阶段设计针对性的触达策略和跨阶段转化机制？ 
+ 需要基于消费者决策行为设计多触点的传播策略 
+ 已有消费者的行为和决策路径数据（搜索数据、消费者调研、平台洞察等） 
+ 消费者决策路径极短（冲动购买或习惯性购买），不需要多阶段设计 
+ 消费者画像与行为洞察 
+ 消费者购买决策路径数据 
+ 可用传播平台矩阵 
+ 识别消费者决策路径的关键阶段（触发注意→信息搜索→信任验证→购买决策→使用分享），标注每阶段的消费者行为特征 
+ 按消费者细分类型，为不同阶段设计差异化的触达策略和沟通内容 
+ 为每个阶段匹配最有效的触达渠道和内容形式 
+ 设计跨阶段用户流转承接机制（搜索词→落地页、口碑内容→搜索验证回流、种草内容→购买链路） 
+ 消费者旅程传播方案 
+ 消费者旅程模型过于简化——实际决策路径可能非线性 
+ 消费者旅程模型过于简化——实际决策路径可能非线性 
+  
+ lens_campaign-journey-002" data-name="消费者决策路径与传播链路设计" data-q="如何基于消费者从认知到购买的完整决策路径，为每个阶段设计针对性的触达策略和跨阶段转化机制？">
+          <button class="lens-head" type="button" aria-expanded="false" aria-controls="lens_campaign-journey-002-body">
+            <span class="lens-no">09</span>
+            <span class="lens-text">
+              <span class="lens-name">消费者决策路径与传播链路设计</span>
+              <span class="lens-q">如何基于消费者从认知到购买的完整决策路径，为每个阶段设计针对性的触达策略和跨阶段转化机制？</span>
+              <span class="lens-flags"><span class="flag ">已确认</span><span class="flag">4 步</span></span>
+            </span>
+            <span class="toggle-mark" aria-hidden="true"></span>
+          </button>
+          <div class="lens-body" id="lens_campaign-journey-002-body">
+            <div class="lens-body-inner">
+              <div class="lens-body-content">
+                <div class="fields">
+                  <div class="field"><div class="field-label">Use when<span class="zh">适用条件</span></div><div class="field-val"><ul><li>需要基于消费者决策行为设计多触点的传播策略</li><li>已有消费者的行为和决策路径数据（搜索数据、消费者调研、平台洞察等）</li></ul></div></div>
+                  <div class="field"><div class="field-label">Skip when<span class="zh">跳过条件</span></div><div class="field-val"><ul><li>消费者决策路径极短（冲动购买或习惯性购买），不需要多阶段设计</li></ul></div></div>
+                  <div class="field"><div class="field-label">Inputs<span class="zh">所需输入</span></div><div class="field-val"><ul><li>消费者画像与行为洞察</li><li>消费者购买决策路径数据</li><li>可用传播平台矩阵</li></ul></div></div>
+                  <div class="field"><div class="field-label">Operations<span class="zh">操作步骤</span></div><div class="field-val"><ol class="steps"><li>识别消费者决策路径的关键阶段（触发注意→信息搜索→信任验证→购买决策→使用分享），标注每阶段的消费者行为特征</li><li>按消费者细分类型，为不同阶段设计差异化的触达策略和沟通内容</li><li>为每个阶段匹配最有效的触达渠道和内容形式</li><li>设计跨阶段用户流转承接机制（搜索词→落地页、口碑内容→搜索验证回流、种草内容→购买链路）</li></ol></div></div>
+                  <div class="field"><div class="field-label">Page structure<span class="zh">页面表达</span></div><div class="field-val"><p class="muted">暂无页面表达结构（可按操作步骤推导）。</p></div></div>
+                  <div class="field"><div class="field-label">Outputs<span class="zh">预期输出</span></div><div class="field-val"><ul><li>消费者旅程传播方案</li></ul></div></div>
+                  <div class="field"><div class="field-label">Failure modes<span class="zh">失效模式</span></div><div class="field-val"><ul><li>消费者旅程模型过于简化——实际决策路径可能非线性</li></ul></div></div>
+                  <div class="field"><div class="field-label">Boundaries<span class="zh">适用边界</span></div><div class="field-val"><ul><li>消费者旅程模型过于简化——实际决策路径可能非线性</li></ul></div></div>
+                  <div class="field"><div class="field-label">Evidence<span class="zh">案例证据</span></div><div class="field-val"><p class="muted">未附案例证据说明。</p></div></div>
+                  
+                </div>
+                <div class="idline">
+                  <span>lens_campaign-journey-002</span>
+                  <button class="copybtn" type="button" data-copy="lens_campaign-journey-002">复制 ID</button>
+                  <span>lenses/lens_campaign-journey-002.md · 更新 2026-07-27</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </article>
+        <article class="lens" id="lens_campaign-journey-003" data-search="分层社交内容框架（5w模型） 
+ 如何围绕品牌理念建立从「品牌是什么」到「什么时候说」的五层社交内容框架，使品牌内容既有深度又有节奏？ 
+ 品牌有清晰的理念/定位，可以拆解为多层内容叙事 
+ 需要在社交平台上持续产出有层次的内容 
+ 品牌只需要短期或单一类型的内容执行 
+ 品牌理念与核心定位 
+ 目标消费者细分画像 
+ 年度业务目标与关键节点 
+ what层：将品牌核心理念转化为具体的内容主题，建立品牌认知基础 
+ why层：挖掘品牌理念与社会文化趋势的关联点，制造文化张力和话题性 
+ who层：围绕细分人群制作生活方式内容，建立「品牌懂我」的身份连接 
+ how层：展示品牌理念在具体场景中的呈现方式，让消费者看到可感知的价值 
+ when层：将五层内容框架与季节性需求/营销节点匹配，形成全年社交内容日历 
+ 5w社交内容框架 
+ 全年内容日历 
+ 5w框架层级之间缺乏连贯性——需确保从理念到执行的叙事递进 
+ 5w框架层级之间缺乏连贯性——需确保从理念到执行的叙事递进 
+  
+ lens_campaign-journey-003" data-name="分层社交内容框架（5W模型）" data-q="如何围绕品牌理念建立从「品牌是什么」到「什么时候说」的五层社交内容框架，使品牌内容既有深度又有节奏？">
+          <button class="lens-head" type="button" aria-expanded="false" aria-controls="lens_campaign-journey-003-body">
+            <span class="lens-no">10</span>
+            <span class="lens-text">
+              <span class="lens-name">分层社交内容框架（5W模型）</span>
+              <span class="lens-q">如何围绕品牌理念建立从「品牌是什么」到「什么时候说」的五层社交内容框架，使品牌内容既有深度又有节奏？</span>
+              <span class="lens-flags"><span class="flag ">已确认</span><span class="flag">5 步</span></span>
+            </span>
+            <span class="toggle-mark" aria-hidden="true"></span>
+          </button>
+          <div class="lens-body" id="lens_campaign-journey-003-body">
+            <div class="lens-body-inner">
+              <div class="lens-body-content">
+                <div class="fields">
+                  <div class="field"><div class="field-label">Use when<span class="zh">适用条件</span></div><div class="field-val"><ul><li>品牌有清晰的理念/定位，可以拆解为多层内容叙事</li><li>需要在社交平台上持续产出有层次的内容</li></ul></div></div>
+                  <div class="field"><div class="field-label">Skip when<span class="zh">跳过条件</span></div><div class="field-val"><ul><li>品牌只需要短期或单一类型的内容执行</li></ul></div></div>
+                  <div class="field"><div class="field-label">Inputs<span class="zh">所需输入</span></div><div class="field-val"><ul><li>品牌理念与核心定位</li><li>目标消费者细分画像</li><li>年度业务目标与关键节点</li></ul></div></div>
+                  <div class="field"><div class="field-label">Operations<span class="zh">操作步骤</span></div><div class="field-val"><ol class="steps"><li>WHAT层：将品牌核心理念转化为具体的内容主题，建立品牌认知基础</li><li>WHY层：挖掘品牌理念与社会文化趋势的关联点，制造文化张力和话题性</li><li>WHO层：围绕细分人群制作生活方式内容，建立「品牌懂我」的身份连接</li><li>HOW层：展示品牌理念在具体场景中的呈现方式，让消费者看到可感知的价值</li><li>WHEN层：将五层内容框架与季节性需求/营销节点匹配，形成全年社交内容日历</li></ol></div></div>
+                  <div class="field"><div class="field-label">Page structure<span class="zh">页面表达</span></div><div class="field-val"><p class="muted">暂无页面表达结构（可按操作步骤推导）。</p></div></div>
+                  <div class="field"><div class="field-label">Outputs<span class="zh">预期输出</span></div><div class="field-val"><ul><li>5W社交内容框架</li><li>全年内容日历</li></ul></div></div>
+                  <div class="field"><div class="field-label">Failure modes<span class="zh">失效模式</span></div><div class="field-val"><ul><li>5W框架层级之间缺乏连贯性——需确保从理念到执行的叙事递进</li></ul></div></div>
+                  <div class="field"><div class="field-label">Boundaries<span class="zh">适用边界</span></div><div class="field-val"><ul><li>5W框架层级之间缺乏连贯性——需确保从理念到执行的叙事递进</li></ul></div></div>
+                  <div class="field"><div class="field-label">Evidence<span class="zh">案例证据</span></div><div class="field-val"><p class="muted">未附案例证据说明。</p></div></div>
+                  
+                </div>
+                <div class="idline">
+                  <span>lens_campaign-journey-003</span>
+                  <button class="copybtn" type="button" data-copy="lens_campaign-journey-003">复制 ID</button>
+                  <span>lenses/lens_campaign-journey-003.md · 更新 2026-07-27</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </article>
+        <article class="lens" id="lens_campaign-journey-004" data-search="年度节点主题化传播规划 
+ 如何围绕品牌年度核心主题，按季节/节日节点设计分场景的产品组合和传播方案？ 
+ 品牌有年度核心传播主题，需要按季节/节点落地为具体传播方案 
+ 产品线较为丰富，不同季节/节点可以有不同的产品组合 
+ 品牌只需单一节点的传播方案而非全年规划 
+ 品牌年度主题尚未确定 
+ 品牌年度核心主题 
+ 产品线与适用场景 
+ 季节/节日节点日历 
+ 目标消费者场景需求洞察 
+ 将品牌年度核心主题拆解为可操作的子主题和关键信息 
+ 按季节/节日节点识别消费者场景需求，匹配对应的产品组合 
+ 针对每个节点提炼差异化的消费者痛点和产品卖点 
+ 规划各节点的传播资源分配、时间节奏和预期效果 
+ 确保各节点之间的主题连贯性和叙事递进 
+ 年度节点传播规划 
+ 分场景产品策略 
+ 节点规划与消费者实际节奏错位 
+ 节点规划与消费者实际节奏错位 
+  
+ lens_campaign-journey-004" data-name="年度节点主题化传播规划" data-q="如何围绕品牌年度核心主题，按季节/节日节点设计分场景的产品组合和传播方案？">
+          <button class="lens-head" type="button" aria-expanded="false" aria-controls="lens_campaign-journey-004-body">
+            <span class="lens-no">11</span>
+            <span class="lens-text">
+              <span class="lens-name">年度节点主题化传播规划</span>
+              <span class="lens-q">如何围绕品牌年度核心主题，按季节/节日节点设计分场景的产品组合和传播方案？</span>
+              <span class="lens-flags"><span class="flag ">已确认</span><span class="flag">5 步</span></span>
+            </span>
+            <span class="toggle-mark" aria-hidden="true"></span>
+          </button>
+          <div class="lens-body" id="lens_campaign-journey-004-body">
+            <div class="lens-body-inner">
+              <div class="lens-body-content">
+                <div class="fields">
+                  <div class="field"><div class="field-label">Use when<span class="zh">适用条件</span></div><div class="field-val"><ul><li>品牌有年度核心传播主题，需要按季节/节点落地为具体传播方案</li><li>产品线较为丰富，不同季节/节点可以有不同的产品组合</li></ul></div></div>
+                  <div class="field"><div class="field-label">Skip when<span class="zh">跳过条件</span></div><div class="field-val"><ul><li>品牌只需单一节点的传播方案而非全年规划</li><li>品牌年度主题尚未确定</li></ul></div></div>
+                  <div class="field"><div class="field-label">Inputs<span class="zh">所需输入</span></div><div class="field-val"><ul><li>品牌年度核心主题</li><li>产品线与适用场景</li><li>季节/节日节点日历</li><li>目标消费者场景需求洞察</li></ul></div></div>
+                  <div class="field"><div class="field-label">Operations<span class="zh">操作步骤</span></div><div class="field-val"><ol class="steps"><li>将品牌年度核心主题拆解为可操作的子主题和关键信息</li><li>按季节/节日节点识别消费者场景需求，匹配对应的产品组合</li><li>针对每个节点提炼差异化的消费者痛点和产品卖点</li><li>规划各节点的传播资源分配、时间节奏和预期效果</li><li>确保各节点之间的主题连贯性和叙事递进</li></ol></div></div>
+                  <div class="field"><div class="field-label">Page structure<span class="zh">页面表达</span></div><div class="field-val"><p class="muted">暂无页面表达结构（可按操作步骤推导）。</p></div></div>
+                  <div class="field"><div class="field-label">Outputs<span class="zh">预期输出</span></div><div class="field-val"><ul><li>年度节点传播规划</li><li>分场景产品策略</li></ul></div></div>
+                  <div class="field"><div class="field-label">Failure modes<span class="zh">失效模式</span></div><div class="field-val"><ul><li>节点规划与消费者实际节奏错位</li></ul></div></div>
+                  <div class="field"><div class="field-label">Boundaries<span class="zh">适用边界</span></div><div class="field-val"><ul><li>节点规划与消费者实际节奏错位</li></ul></div></div>
+                  <div class="field"><div class="field-label">Evidence<span class="zh">案例证据</span></div><div class="field-val"><p class="muted">未附案例证据说明。</p></div></div>
+                  
+                </div>
+                <div class="idline">
+                  <span>lens_campaign-journey-004</span>
+                  <button class="copybtn" type="button" data-copy="lens_campaign-journey-004">复制 ID</button>
+                  <span>lenses/lens_campaign-journey-004.md · 更新 2026-07-27</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </article></div>
+      </section>
+      <section class="module" id="mod_competitor-analysis" style="--i:2">
+        <header class="module-head">
+          <div class="mod-no">M03</div>
+          <div>
+            <h2>竞品分析</h2>
+            <p class="mod-meta">
+              <span><code>mod_competitor-analysis</code></span>
+              <span>3 个方法</span>
+            </p>
+            <p class="mod-decision">模块「竞品分析」新增 1 个可复用方法，源自 2 个案例（某运动品牌跑步户外策略、某运动品牌健步文化策略）的跨案例验证。（版本 7.0.1 · 批准 2026-07-28）</p>
+            <ul class="precond"><li>项目需包含与竞品相关的市场、产品、传播数据</li><li>竞品选择需基于明确的标准（市场份额/策略相关性/品类代表性等）</li></ul>
+          </div>
+        </header>
+        <div class="lenslist">
+        <article class="lens" id="lens_mod_competitor-analysis-d8e026bf" data-search="竞品沟通策略谱系分析法 
+ 如何在品类竞争格局复杂的情况下，按沟通策略维度系统分析竞品定位差异，识别品牌可占据的沟通空白？ 
+ 品类中竞品数量较多且定位分化明显 
+ 需要从竞品的沟通内容（而非仅产品功能）层面发现差异化机会 
+ 有竞品在主要传播渠道（社媒/广告/pr）的沟通素材可获取 
+ 品类竞争已从产品功能层面延伸到消费者生活方式层面 
+ 品类竞争仍以产品功能参数为主，沟通策略差异不明显 
+ 缺乏竞品沟通内容数据 
+ 项目不需要沟通层面的差异化定位 
+ 主要竞品的品牌定位和传播主张 
+ 竞品在主要渠道的沟通内容和形式分析 
+ 竞品的目标人群和场景定位 
+ 品类沟通趋势变化数据 
+ 消费者对竞品沟通的感知和反应数据（如可用） 
+ 确定竞争谱系维度：根据品类特征选择竞品分析的沟通维度框架（如场景维度：专业/城市/轻/运动；或情感维度：功能/时尚/极限/休闲等） 
+ 竞品定位映射：将每个竞品按选定维度放置在沟通图谱中，标记各竞品的核心沟通主张和关键词汇 
+ 密集区与空白区识别：分析图谱中各区域的竞品密集度，识别沟通高度同质化的竞争红海和尚未被充分占位的沟通蓝海 
+ 品牌差异化定位推导：基于空白区分析，结合品牌自身资产和能力，推导可占领的独特沟通位置 
+ 标杆案例拆解：收集跨品类中成功占据该沟通位置的品牌案例，提取可借鉴的沟通方法和执行路径 
+ 竞品沟通策略谱系图 
+ 竞争密集/空白区域分析 
+ 品牌差异化沟通定位方案 
+ 跨品类借鉴案例分析 
+ 谱系维度选择不当导致竞品分布无法区分差异化 
+ 将多个品类不兼容的沟通方式简单叠加 
+ 空白区无人占据可能是需求不存在而非机会 
+ 该方法适用于沟通策略层面的差异化分析，不适用于技术/价格等维度的竞争分析 
+ 需结合品牌自身资产验证空白区的可触达性 
+ 源自某运动品牌户外策略（按专业户外/城市户外/轻户外/运动户外四类分析竞品定位+按功能/时尚/极限/休闲场景分析沟通策略）和健步系列策略（竞技品牌vs 某瑜伽生活方式品牌案例对比）的融合方法 
+ 沟通谱系框架 定义分析的沟通维度框架（如场景/调性/目标人群等维度），解释为什么选择这些维度以及各维度的判断标准。框架应能涵盖主要竞品的差异化位置 
+ 竞品沟通定位分布 按选定维度将各竞品定位在谱系图上，标注其核心沟通主张和关键词。品牌自身也用异色标注，形成直观的&#39;我们在哪，竞品在哪&#39;的对比 
+ 密集区与空白区判断 分析谱系中各区域的竞品密度，识别竞争红海和可能的空白机会。对每个空白区判断是&#39;真实机会&#39;还是&#39;无人占据有其原因&#39;，附判断依据 
+ 品牌差异化方向 基于机会区分析，结合品牌自身资产和能力，提出1-2个可选择的差异化沟通定位方向。每个方向含定位表述、支撑理由和风险提示 
+ 竞品分析：如何通过文化洞察和消费者痛点分析，建立品牌差异化沟通策略的完整证据链？... 从宏观社会情绪中提炼与品类相关的文化张力 收集消费者在品类使用中的具体痛点（按身体部位/使用场景分类） 将文化洞察和消费者痛点关联到品牌产品利益 建立「文化洞察→消费者痛点→品牌利益」的三段式论证结构 用消费者原话和数据支撑每个论证环节 
+ lens_mod_competitor-analysis-d8e026bf" data-name="竞品沟通策略谱系分析法" data-q="如何在品类竞争格局复杂的情况下，按沟通策略维度系统分析竞品定位差异，识别品牌可占据的沟通空白？">
+          <button class="lens-head" type="button" aria-expanded="false" aria-controls="lens_mod_competitor-analysis-d8e026bf-body">
+            <span class="lens-no">12</span>
+            <span class="lens-text">
+              <span class="lens-name">竞品沟通策略谱系分析法</span>
+              <span class="lens-q">如何在品类竞争格局复杂的情况下，按沟通策略维度系统分析竞品定位差异，识别品牌可占据的沟通空白？</span>
+              <span class="lens-flags"><span class="flag ">已确认</span><span class="flag flag-accent">变体 1</span><span class="flag">5 步</span><span class="flag flag-accent">4 页表达</span></span>
+            </span>
+            <span class="toggle-mark" aria-hidden="true"></span>
+          </button>
+          <div class="lens-body" id="lens_mod_competitor-analysis-d8e026bf-body">
+            <div class="lens-body-inner">
+              <div class="lens-body-content">
+                <div class="fields">
+                  <div class="field"><div class="field-label">Use when<span class="zh">适用条件</span></div><div class="field-val"><ul><li>品类中竞品数量较多且定位分化明显</li><li>需要从竞品的沟通内容（而非仅产品功能）层面发现差异化机会</li><li>有竞品在主要传播渠道（社媒/广告/PR）的沟通素材可获取</li><li>品类竞争已从产品功能层面延伸到消费者生活方式层面</li></ul></div></div>
+                  <div class="field"><div class="field-label">Skip when<span class="zh">跳过条件</span></div><div class="field-val"><ul><li>品类竞争仍以产品功能参数为主，沟通策略差异不明显</li><li>缺乏竞品沟通内容数据</li><li>项目不需要沟通层面的差异化定位</li></ul></div></div>
+                  <div class="field"><div class="field-label">Inputs<span class="zh">所需输入</span></div><div class="field-val"><ul><li>主要竞品的品牌定位和传播主张</li><li>竞品在主要渠道的沟通内容和形式分析</li><li>竞品的目标人群和场景定位</li><li>品类沟通趋势变化数据</li><li>消费者对竞品沟通的感知和反应数据（如可用）</li></ul></div></div>
+                  <div class="field"><div class="field-label">Operations<span class="zh">操作步骤</span></div><div class="field-val"><ol class="steps"><li>确定竞争谱系维度：根据品类特征选择竞品分析的沟通维度框架（如场景维度：专业/城市/轻/运动；或情感维度：功能/时尚/极限/休闲等）</li><li>竞品定位映射：将每个竞品按选定维度放置在沟通图谱中，标记各竞品的核心沟通主张和关键词汇</li><li>密集区与空白区识别：分析图谱中各区域的竞品密集度，识别沟通高度同质化的竞争红海和尚未被充分占位的沟通蓝海</li><li>品牌差异化定位推导：基于空白区分析，结合品牌自身资产和能力，推导可占领的独特沟通位置</li><li>标杆案例拆解：收集跨品类中成功占据该沟通位置的品牌案例，提取可借鉴的沟通方法和执行路径</li></ol></div></div>
+                  <div class="field"><div class="field-label">Page structure<span class="zh">页面表达</span></div><div class="field-val"><ul><li><b>P1 · 沟通谱系框架</b><br><span class="note">定义分析的沟通维度框架（如场景/调性/目标人群等维度），解释为什么选择这些维度以及各维度的判断标准。框架应能涵盖主要竞品的差异化位置</span></li><li><b>P2 · 竞品沟通定位分布</b><br><span class="note">按选定维度将各竞品定位在谱系图上，标注其核心沟通主张和关键词。品牌自身也用异色标注，形成直观的&#39;我们在哪，竞品在哪&#39;的对比</span></li><li><b>P3 · 密集区与空白区判断</b><br><span class="note">分析谱系中各区域的竞品密度，识别竞争红海和可能的空白机会。对每个空白区判断是&#39;真实机会&#39;还是&#39;无人占据有其原因&#39;，附判断依据</span></li><li><b>P4 · 品牌差异化方向</b><br><span class="note">基于机会区分析，结合品牌自身资产和能力，提出1-2个可选择的差异化沟通定位方向。每个方向含定位表述、支撑理由和风险提示</span></li></ul></div></div>
+                  <div class="field"><div class="field-label">Outputs<span class="zh">预期输出</span></div><div class="field-val"><ul><li>竞品沟通策略谱系图</li><li>竞争密集/空白区域分析</li><li>品牌差异化沟通定位方案</li><li>跨品类借鉴案例分析</li></ul></div></div>
+                  <div class="field"><div class="field-label">Failure modes<span class="zh">失效模式</span></div><div class="field-val"><ul><li>谱系维度选择不当导致竞品分布无法区分差异化</li><li>将多个品类不兼容的沟通方式简单叠加</li><li>空白区无人占据可能是需求不存在而非机会</li></ul></div></div>
+                  <div class="field"><div class="field-label">Boundaries<span class="zh">适用边界</span></div><div class="field-val"><ul><li>该方法适用于沟通策略层面的差异化分析，不适用于技术/价格等维度的竞争分析</li><li>需结合品牌自身资产验证空白区的可触达性</li></ul></div></div>
+                  <div class="field"><div class="field-label">Evidence<span class="zh">案例证据</span></div><div class="field-val"><p>源自某运动品牌户外策略（按专业户外/城市户外/轻户外/运动户外四类分析竞品定位+按功能/时尚/极限/休闲场景分析沟通策略）和健步系列策略（竞技品牌vs 某瑜伽生活方式品牌案例对比）的融合方法</p></div></div>
+                  <div class="field"><div class="field-label">Variant<span class="zh">变体与参考</span></div><div class="field-val"><div class="variants"><div class="variant"><p class="variant-name">竞品分析：如何通过文化洞察和消费者痛点分析，建立品牌差异化沟通策略的完整证据链？...</p><div class="sublabel">适用条件</div><ul><li>品牌需要进行该模块相关的策略分析</li><li>有可获取的相关数据和消费者洞察</li></ul><div class="sublabel">操作步骤</div><ol class="steps"><li>从宏观社会情绪中提炼与品类相关的文化张力</li><li>收集消费者在品类使用中的具体痛点（按身体部位/使用场景分类）</li><li>将文化洞察和消费者痛点关联到品牌产品利益</li><li>建立「文化洞察→消费者痛点→品牌利益」的三段式论证结构</li><li>用消费者原话和数据支撑每个论证环节</li></ol></div></div></div></div>
+                </div>
+                <div class="idline">
+                  <span>lens_mod_competitor-analysis-d8e026bf</span>
+                  <button class="copybtn" type="button" data-copy="lens_mod_competitor-analysis-d8e026bf">复制 ID</button>
+                  <span>lenses/lens_mod_competitor-analysis-d8e026bf.md · 更新 2026-07-28</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </article>
+        <article class="lens" id="lens_portfolio-positioning-map" data-search="多品牌组合竞争定位地图 
+ 如何在一张图上展示多品牌在竞争空间中的位置并为每个品牌分配组合角色？ 
+ 竞争定位地图 
+ 品牌组合定位 
+ 多品牌同品类运营 
+ 品类有升级分化趋势 
+ 单品牌不需要 
+ 价格与需求维度不适用 
+ 各品牌定位信息 
+ 品类竞争格局 
+ 消费升级趋势 
+ 构建价格×需求层次坐标系 
+ 标示各品牌和竞品位置 
+ 结合趋势标注策略方向 
+ 检测内部蚕食风险 
+ 竞争定位地图 
+ 组合角色描述 
+ 蚕食风险检测 
+ 调整建议 
+ 地图太复杂无法指导 
+ 角色与实际定位不一致 
+ 仅描述现状无方向 
+ 只提供框架不替代品牌深度审计 
+ 坐标维度需根据品类调整 
+  
+ 定位坐标系全貌 构建竞争坐标系展示各品牌位置
+回答：各品牌在竞争空间中的位置？
+证据：品牌定位；竞品数据；趋势 
+ 组合角色与区隔 明确各品牌角色和区隔策略
+回答：各自角色？如何避免内耗？
+证据：定位地图；各品牌优势 
+ lens_portfolio-positioning-map" data-name="多品牌组合竞争定位地图" data-q="如何在一张图上展示多品牌在竞争空间中的位置并为每个品牌分配组合角色？">
+          <button class="lens-head" type="button" aria-expanded="false" aria-controls="lens_portfolio-positioning-map-body">
+            <span class="lens-no">13</span>
+            <span class="lens-text">
+              <span class="lens-name">多品牌组合竞争定位地图</span>
+              <span class="lens-q">如何在一张图上展示多品牌在竞争空间中的位置并为每个品牌分配组合角色？</span>
+              <span class="lens-flags"><span class="flag ">已确认</span><span class="flag">4 步</span><span class="flag flag-accent">2 页表达</span></span>
+            </span>
+            <span class="toggle-mark" aria-hidden="true"></span>
+          </button>
+          <div class="lens-body" id="lens_portfolio-positioning-map-body">
+            <div class="lens-body-inner">
+              <div class="lens-body-content">
+                <div class="fields">
+                  <div class="field"><div class="field-label">Use when<span class="zh">适用条件</span></div><div class="field-val"><ul><li>多品牌同品类运营</li><li>品类有升级分化趋势</li></ul></div></div>
+                  <div class="field"><div class="field-label">Skip when<span class="zh">跳过条件</span></div><div class="field-val"><ul><li>单品牌不需要</li><li>价格与需求维度不适用</li></ul></div></div>
+                  <div class="field"><div class="field-label">Inputs<span class="zh">所需输入</span></div><div class="field-val"><ul><li>各品牌定位信息</li><li>品类竞争格局</li><li>消费升级趋势</li></ul></div></div>
+                  <div class="field"><div class="field-label">Operations<span class="zh">操作步骤</span></div><div class="field-val"><ol class="steps"><li>构建价格×需求层次坐标系</li><li>标示各品牌和竞品位置</li><li>结合趋势标注策略方向</li><li>检测内部蚕食风险</li></ol></div></div>
+                  <div class="field"><div class="field-label">Page structure<span class="zh">页面表达</span></div><div class="field-val"><ul><li><b>P1 · 定位坐标系全貌</b><br><span class="note">构建竞争坐标系展示各品牌位置
+回答：各品牌在竞争空间中的位置？
+证据：品牌定位；竞品数据；趋势</span></li><li><b>P2 · 组合角色与区隔</b><br><span class="note">明确各品牌角色和区隔策略
+回答：各自角色？如何避免内耗？
+证据：定位地图；各品牌优势</span></li></ul></div></div>
+                  <div class="field"><div class="field-label">Outputs<span class="zh">预期输出</span></div><div class="field-val"><ul><li>竞争定位地图</li><li>组合角色描述</li><li>蚕食风险检测</li><li>调整建议</li></ul></div></div>
+                  <div class="field"><div class="field-label">Failure modes<span class="zh">失效模式</span></div><div class="field-val"><ul><li>地图太复杂无法指导</li><li>角色与实际定位不一致</li><li>仅描述现状无方向</li></ul></div></div>
+                  <div class="field"><div class="field-label">Boundaries<span class="zh">适用边界</span></div><div class="field-val"><ul><li>只提供框架不替代品牌深度审计</li><li>坐标维度需根据品类调整</li></ul></div></div>
+                  <div class="field"><div class="field-label">Evidence<span class="zh">案例证据</span></div><div class="field-val"><p class="muted">未附案例证据说明。</p></div></div>
+                  
+                </div>
+                <div class="idline">
+                  <span>lens_portfolio-positioning-map</span>
+                  <button class="copybtn" type="button" data-copy="lens_portfolio-positioning-map">复制 ID</button>
+                  <span>lenses/lens_portfolio-positioning-map.md · 更新 2026-07-28</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </article>
+        <article class="lens" id="lens_sub-brand-profile-template" data-search="子品牌结构化分析模板 
+ 如何用统一框架完成单个子品牌的竞争定位分析？ 
+ 品牌四页分析 
+ 子品牌档案 
+ 需要在品牌组合中分析单个子品牌 
+ 有竞品数据和消费者反馈 
+ 品牌无需详细竞争分析 
+ 品牌的定位区间 
+ 细分赛道竞品数据 
+ 消费者反馈/评论 
+ 产品rtb资料 
+ 竞品对标：识别核心竞品及其定位/产品线/优势/rtb 
+ brand&#39;s best self：确定品牌独特竞争优势和差异化角度 
+ ta与核心需求：描画目标消费者画像，提炼未被满足的需求 
+ 品牌主张：综合竞品、优势和需求，输出品牌主张和产品支撑 
+ 竞品对标分析 
+ 品牌优势陈述 
+ ta画像与需求 
+ 品牌主张 
+ 竞品选择偏差导致对标失真 
+ best self缺乏数据支撑 
+ 品牌主张与产品实际脱节 
+ 仅作分析不做执行规划 
+ 模板输出需与其他品牌对比验证区隔 
+  
+ 竞品对标分析 系统梳理核心竞品的定位/产品/优势
+回答：谁在竞争？他们怎么做的？
+证据：竞品定位；产品线；rtb 
+ 品牌核心优势定义 确定品牌的独特竞争优势和差异化角度
+回答：我们的独特优势是什么？从哪里切入？
+证据：竞品分析；品牌能力 
+ ta画像与需求 描画目标消费者并提炼未被满足的需求
+回答：目标是谁？他们真正需要什么？
+证据：消费者反馈；行为数据 
+ 品牌主张 综合前三页输出品牌主张和产品支撑
+回答：品牌承诺什么？凭什么相信？
+证据：竞品分析；优势；ta需求；rtb 
+ lens_sub-brand-profile-template" data-name="子品牌结构化分析模板" data-q="如何用统一框架完成单个子品牌的竞争定位分析？">
+          <button class="lens-head" type="button" aria-expanded="false" aria-controls="lens_sub-brand-profile-template-body">
+            <span class="lens-no">14</span>
+            <span class="lens-text">
+              <span class="lens-name">子品牌结构化分析模板</span>
+              <span class="lens-q">如何用统一框架完成单个子品牌的竞争定位分析？</span>
+              <span class="lens-flags"><span class="flag ">已确认</span><span class="flag">4 步</span><span class="flag flag-accent">4 页表达</span></span>
+            </span>
+            <span class="toggle-mark" aria-hidden="true"></span>
+          </button>
+          <div class="lens-body" id="lens_sub-brand-profile-template-body">
+            <div class="lens-body-inner">
+              <div class="lens-body-content">
+                <div class="fields">
+                  <div class="field"><div class="field-label">Use when<span class="zh">适用条件</span></div><div class="field-val"><ul><li>需要在品牌组合中分析单个子品牌</li><li>有竞品数据和消费者反馈</li></ul></div></div>
+                  <div class="field"><div class="field-label">Skip when<span class="zh">跳过条件</span></div><div class="field-val"><ul><li>品牌无需详细竞争分析</li></ul></div></div>
+                  <div class="field"><div class="field-label">Inputs<span class="zh">所需输入</span></div><div class="field-val"><ul><li>品牌的定位区间</li><li>细分赛道竞品数据</li><li>消费者反馈/评论</li><li>产品RTB资料</li></ul></div></div>
+                  <div class="field"><div class="field-label">Operations<span class="zh">操作步骤</span></div><div class="field-val"><ol class="steps"><li>竞品对标：识别核心竞品及其定位/产品线/优势/RTB</li><li>Brand&#39;s Best Self：确定品牌独特竞争优势和差异化角度</li><li>TA与核心需求：描画目标消费者画像，提炼未被满足的需求</li><li>品牌主张：综合竞品、优势和需求，输出品牌主张和产品支撑</li></ol></div></div>
+                  <div class="field"><div class="field-label">Page structure<span class="zh">页面表达</span></div><div class="field-val"><ul><li><b>P1 · 竞品对标分析</b><br><span class="note">系统梳理核心竞品的定位/产品/优势
+回答：谁在竞争？他们怎么做的？
+证据：竞品定位；产品线；RTB</span></li><li><b>P2 · 品牌核心优势定义</b><br><span class="note">确定品牌的独特竞争优势和差异化角度
+回答：我们的独特优势是什么？从哪里切入？
+证据：竞品分析；品牌能力</span></li><li><b>P3 · TA画像与需求</b><br><span class="note">描画目标消费者并提炼未被满足的需求
+回答：目标是谁？他们真正需要什么？
+证据：消费者反馈；行为数据</span></li><li><b>P4 · 品牌主张</b><br><span class="note">综合前三页输出品牌主张和产品支撑
+回答：品牌承诺什么？凭什么相信？
+证据：竞品分析；优势；TA需求；RTB</span></li></ul></div></div>
+                  <div class="field"><div class="field-label">Outputs<span class="zh">预期输出</span></div><div class="field-val"><ul><li>竞品对标分析</li><li>品牌优势陈述</li><li>TA画像与需求</li><li>品牌主张</li></ul></div></div>
+                  <div class="field"><div class="field-label">Failure modes<span class="zh">失效模式</span></div><div class="field-val"><ul><li>竞品选择偏差导致对标失真</li><li>Best Self缺乏数据支撑</li><li>品牌主张与产品实际脱节</li></ul></div></div>
+                  <div class="field"><div class="field-label">Boundaries<span class="zh">适用边界</span></div><div class="field-val"><ul><li>仅作分析不做执行规划</li><li>模板输出需与其他品牌对比验证区隔</li></ul></div></div>
+                  <div class="field"><div class="field-label">Evidence<span class="zh">案例证据</span></div><div class="field-val"><p class="muted">未附案例证据说明。</p></div></div>
+                  
+                </div>
+                <div class="idline">
+                  <span>lens_sub-brand-profile-template</span>
+                  <button class="copybtn" type="button" data-copy="lens_sub-brand-profile-template">复制 ID</button>
+                  <span>lenses/lens_sub-brand-profile-template.md · 更新 2026-07-28</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </article></div>
+      </section>
+      <section class="module" id="mod_consumer-insight" style="--i:3">
+        <header class="module-head">
+          <div class="mod-no">M04</div>
+          <div>
+            <h2>消费者洞察</h2>
+            <p class="mod-meta">
+              <span><code>mod_consumer-insight</code></span>
+              <span>1 个方法</span>
+            </p>
+            <p class="mod-decision">模块「消费者洞察」新增 1 个可复用方法，源自某童装品牌升级案例。（版本 7.0.0 · 批准 2026-07-27）</p>
+            <ul class="precond"><li>项目需要消费者产品需求和使用体验的原始调研数据</li><li>有竞品消费者认知对比数据可参照</li></ul>
+          </div>
+        </header>
+        <div class="lenslist">
+        <article class="lens" id="lens_mod_consumer-insight-5adf4bcb" data-search="用户真实需求 vs. 设计假设的差距分析法 
+ 当产品设计基于品牌对消费者需求的假设而非消费者真实体验时，如何系统识别产品功能与用户痛点之间的差距，并指导产品优化方向？ 
+ 产品根据设计师或行业经验设计，未经过系统的消费者使用验证 
+ 有消费者对现有产品的不满/投诉/替换行为的定性或定量数据 
+ 需要从消费者视角重新定义产品优先级和迭代方向 
+ 品类中存在&#39;品牌认为好的设计&#39;与&#39;消费者实际需要的功能&#39;之间的鸿沟 
+ 产品完全由消费者共创设计，需求验证充分 
+ 品类高度技术驱动，消费者体验差异主要体现在性能参数 
+ 缺乏消费者对现有产品的使用反馈数据 
+ 现有产品的消费者使用反馈（评论/投诉/退换货原因） 
+ 设计师/产品团队的设计假设陈述 
+ 竞品产品功能和消费者评价对比数据 
+ 消费者购买决策因素排序数据 
+ 跨品类消费者通用需求演变趋势 
+ 设计假设梳理：收集产品团队/品牌方对消费者需求的理解和设计假设，整理为可验证的命题列表 
+ 消费者反馈收集：按痛点的严重程度和频率，整理消费者对现有产品的真实不满和使用障碍 
+ 鸿沟映射：将设计假设与消费者反馈逐一对比，标注&#39;假设正确/假设错误/重要疏漏&#39;三类关系，量化差距规模 
+ 需求优先级重排：基于消费者反馈的严重性和频率，重新排列产品优化的优先级顺序 
+ 产品优化方向推导：综合鸿沟分析和优先级排序，产出具体的产品改进方向和沟通重点建议 
+ 设计假设与消费者需求对照矩阵 
+ 产品优化优先级清单 
+ 消费者真正关注的核心功能维度定义 
+ 产品沟通重点调整建议 
+ 消费者反馈样本量不足以代表目标人群 
+ 未区分&#39;少量用户的极端不满&#39;和&#39;大量用户的一般性需求&#39; 
+ 过度反应于小众反馈而偏离主流需求 
+ 核心适用场景是产品设计团队与消费者之间存在认知差距的品类 
+ 反馈数据需要区分真实痛点和&#39;说得好听但非实际决策因素&#39;的偏差 
+ 源自某童装品牌升级：通过对比&#39;妈妈以为的好看设计&#39;（阔腿裤/高领毛衣/紧身裤/小亮片）与&#39;孩子的不适甚至危险&#39;，识别出舒适面料/工艺/细节才是消费者真正在意的核心价值，从而重塑品牌定位为&#39;看见孩子的舒适&#39; 
+ 设计假设厘清 梳理产品团队/品牌方对消费者需求的核心假设——他们认为消费者在意什么、产品设计的出发点是什么。每条假设标注来源（设计/产品/营销），目的是让隐性假设显性化 
+ 消费者真实反馈 整理消费者对产品的真实评价和不满。不论数据形式（评论/投诉/问卷/访谈），核心是呈现消费者实际在意的点与团队假设的差异。可以用痛点清单或分类框架组织 
+ 假设与现实差异分析 对比&#39;我们以为消费者要的&#39;与&#39;消费者实际说的&#39;，标注一致/冲突/遗漏三类关系。核心结论是：最大的认知差距在哪里、最严重的被忽视需求是什么 
+ 产品优化与沟通建议 基于差距分析输出产品优化方向建议（改进什么、优先级）和沟通策略建议（已有优势怎么讲、新功能怎么传播）。建议要区分短期可执行和中长期规划 
+ 消费者洞察：如何系统识别消费者真实需求与品牌设计假设之间的差距，通过消费者原话验证找到产品优... 收集消费者对产品的定性反馈（访谈/评论/投诉） 梳理品牌方对产品设计的设计假设 建立设计假设与消费者真实体验的对照矩阵 识别差距最大的维度作为优先优化方向 将消费者原话转化为产品改进原则 
+ lens_mod_consumer-insight-5adf4bcb" data-name="用户真实需求 vs. 设计假设的差距分析法" data-q="当产品设计基于品牌对消费者需求的假设而非消费者真实体验时，如何系统识别产品功能与用户痛点之间的差距，并指导产品优化方向？">
+          <button class="lens-head" type="button" aria-expanded="false" aria-controls="lens_mod_consumer-insight-5adf4bcb-body">
+            <span class="lens-no">15</span>
+            <span class="lens-text">
+              <span class="lens-name">用户真实需求 vs. 设计假设的差距分析法</span>
+              <span class="lens-q">当产品设计基于品牌对消费者需求的假设而非消费者真实体验时，如何系统识别产品功能与用户痛点之间的差距，并指导产品优化方向？</span>
+              <span class="lens-flags"><span class="flag ">已确认</span><span class="flag flag-accent">变体 1</span><span class="flag">5 步</span><span class="flag flag-accent">4 页表达</span></span>
+            </span>
+            <span class="toggle-mark" aria-hidden="true"></span>
+          </button>
+          <div class="lens-body" id="lens_mod_consumer-insight-5adf4bcb-body">
+            <div class="lens-body-inner">
+              <div class="lens-body-content">
+                <div class="fields">
+                  <div class="field"><div class="field-label">Use when<span class="zh">适用条件</span></div><div class="field-val"><ul><li>产品根据设计师或行业经验设计，未经过系统的消费者使用验证</li><li>有消费者对现有产品的不满/投诉/替换行为的定性或定量数据</li><li>需要从消费者视角重新定义产品优先级和迭代方向</li><li>品类中存在&#39;品牌认为好的设计&#39;与&#39;消费者实际需要的功能&#39;之间的鸿沟</li></ul></div></div>
+                  <div class="field"><div class="field-label">Skip when<span class="zh">跳过条件</span></div><div class="field-val"><ul><li>产品完全由消费者共创设计，需求验证充分</li><li>品类高度技术驱动，消费者体验差异主要体现在性能参数</li><li>缺乏消费者对现有产品的使用反馈数据</li></ul></div></div>
+                  <div class="field"><div class="field-label">Inputs<span class="zh">所需输入</span></div><div class="field-val"><ul><li>现有产品的消费者使用反馈（评论/投诉/退换货原因）</li><li>设计师/产品团队的设计假设陈述</li><li>竞品产品功能和消费者评价对比数据</li><li>消费者购买决策因素排序数据</li><li>跨品类消费者通用需求演变趋势</li></ul></div></div>
+                  <div class="field"><div class="field-label">Operations<span class="zh">操作步骤</span></div><div class="field-val"><ol class="steps"><li>设计假设梳理：收集产品团队/品牌方对消费者需求的理解和设计假设，整理为可验证的命题列表</li><li>消费者反馈收集：按痛点的严重程度和频率，整理消费者对现有产品的真实不满和使用障碍</li><li>鸿沟映射：将设计假设与消费者反馈逐一对比，标注&#39;假设正确/假设错误/重要疏漏&#39;三类关系，量化差距规模</li><li>需求优先级重排：基于消费者反馈的严重性和频率，重新排列产品优化的优先级顺序</li><li>产品优化方向推导：综合鸿沟分析和优先级排序，产出具体的产品改进方向和沟通重点建议</li></ol></div></div>
+                  <div class="field"><div class="field-label">Page structure<span class="zh">页面表达</span></div><div class="field-val"><ul><li><b>P1 · 设计假设厘清</b><br><span class="note">梳理产品团队/品牌方对消费者需求的核心假设——他们认为消费者在意什么、产品设计的出发点是什么。每条假设标注来源（设计/产品/营销），目的是让隐性假设显性化</span></li><li><b>P2 · 消费者真实反馈</b><br><span class="note">整理消费者对产品的真实评价和不满。不论数据形式（评论/投诉/问卷/访谈），核心是呈现消费者实际在意的点与团队假设的差异。可以用痛点清单或分类框架组织</span></li><li><b>P3 · 假设与现实差异分析</b><br><span class="note">对比&#39;我们以为消费者要的&#39;与&#39;消费者实际说的&#39;，标注一致/冲突/遗漏三类关系。核心结论是：最大的认知差距在哪里、最严重的被忽视需求是什么</span></li><li><b>P4 · 产品优化与沟通建议</b><br><span class="note">基于差距分析输出产品优化方向建议（改进什么、优先级）和沟通策略建议（已有优势怎么讲、新功能怎么传播）。建议要区分短期可执行和中长期规划</span></li></ul></div></div>
+                  <div class="field"><div class="field-label">Outputs<span class="zh">预期输出</span></div><div class="field-val"><ul><li>设计假设与消费者需求对照矩阵</li><li>产品优化优先级清单</li><li>消费者真正关注的核心功能维度定义</li><li>产品沟通重点调整建议</li></ul></div></div>
+                  <div class="field"><div class="field-label">Failure modes<span class="zh">失效模式</span></div><div class="field-val"><ul><li>消费者反馈样本量不足以代表目标人群</li><li>未区分&#39;少量用户的极端不满&#39;和&#39;大量用户的一般性需求&#39;</li><li>过度反应于小众反馈而偏离主流需求</li></ul></div></div>
+                  <div class="field"><div class="field-label">Boundaries<span class="zh">适用边界</span></div><div class="field-val"><ul><li>核心适用场景是产品设计团队与消费者之间存在认知差距的品类</li><li>反馈数据需要区分真实痛点和&#39;说得好听但非实际决策因素&#39;的偏差</li></ul></div></div>
+                  <div class="field"><div class="field-label">Evidence<span class="zh">案例证据</span></div><div class="field-val"><p>源自某童装品牌升级：通过对比&#39;妈妈以为的好看设计&#39;（阔腿裤/高领毛衣/紧身裤/小亮片）与&#39;孩子的不适甚至危险&#39;，识别出舒适面料/工艺/细节才是消费者真正在意的核心价值，从而重塑品牌定位为&#39;看见孩子的舒适&#39;</p></div></div>
+                  <div class="field"><div class="field-label">Variant<span class="zh">变体与参考</span></div><div class="field-val"><div class="variants"><div class="variant"><p class="variant-name">消费者洞察：如何系统识别消费者真实需求与品牌设计假设之间的差距，通过消费者原话验证找到产品优...</p><div class="sublabel">适用条件</div><ul><li>品牌需要进行该模块相关的策略分析</li><li>有可获取的相关数据和消费者洞察</li></ul><div class="sublabel">操作步骤</div><ol class="steps"><li>收集消费者对产品的定性反馈（访谈/评论/投诉）</li><li>梳理品牌方对产品设计的设计假设</li><li>建立设计假设与消费者真实体验的对照矩阵</li><li>识别差距最大的维度作为优先优化方向</li><li>将消费者原话转化为产品改进原则</li></ol></div></div></div></div>
+                </div>
+                <div class="idline">
+                  <span>lens_mod_consumer-insight-5adf4bcb</span>
+                  <button class="copybtn" type="button" data-copy="lens_mod_consumer-insight-5adf4bcb">复制 ID</button>
+                  <span>lenses/lens_mod_consumer-insight-5adf4bcb.md · 更新 2026-07-27</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </article></div>
+      </section>
+      <section class="module" id="mod_content-execution" style="--i:4">
+        <header class="module-head">
+          <div class="mod-no">M05</div>
+          <div>
+            <h2>内容策略与执行</h2>
+            <p class="mod-meta">
+              <span><code>mod_content-execution</code></span>
+              <span>3 个方法</span>
+            </p>
+            <p class="mod-decision">模块「内容策略与执行」共收录 3 个可复用方法，经跨案例验证和人工审阅。（版本 6.0.0 · 批准 2026-07-27）</p>
+            <ul class="precond"><li>项目需包含与内容策略与执行相关的分析材料</li><li>分析单元需通过B2分段验证</li></ul>
+          </div>
+        </header>
+        <div class="lenslist">
+        <article class="lens" id="lens_content-execution-001" data-search="市场分层×品牌支柱×人群细分的内容策略框架 
+ 如何构建一个三维内容策略框架：按市场成熟度分层、将品牌支柱转化为内容ip体系、针对细分人群设计分层沟通？ 
+ 品牌面向多个不同成熟度的市场 
+ 品牌有明确的品牌支柱可转化为内容ip 
+ 品牌只面向单一市场且消费者同质化高 
+ 品牌支柱定义 
+ 市场分层数据 
+ 目标消费者细分画像 
+ 按市场成熟度分层，为每层设定内容策略侧重点（认知建立/价值传递/生活方式/社群归属等） 
+ 将品牌支柱转化为内容ip体系：每个支柱对应一种内容ip类型（产品价值ip/使用场景ip/人物故事ip），定义各ip的角色、内容形式和更新节奏 
+ 针对每类细分人群设计三层递进沟通模型：why层（动机理解与共鸣）→what层（利益认知与信任）→how层（实践方式与行动指引） 
+ 将三个维度整合为统一的内容策略矩阵 
+ 三维内容策略矩阵 
+ 内容策略脱离品牌定位——内容创意可能偏离品牌调性 
+ 内容策略脱离品牌定位——内容创意可能偏离品牌调性 
+  
+ 内容策略与执行：如何将品牌传播主题转化为多形式、多场景的内容创意矩阵？... 围绕核心传播主题开发多种内容形式（纪录片/播客/社交话题/线下活动） 将品牌理念融入消费者的日常场景（居家/办公/通勤/周末） 为每种内容形式设计可独立传播又可互相引流的连接点 建立「主题→形式→场景→渠道」的内容分发矩阵 
+ 内容策略与执行：如何为品牌建立dos/don&#39;ts风格指南，确保品牌在视觉和内容层面的一致性？... 定义品牌核心风格原则（如孩子气vs小大人/简约聪颖vs纷繁杂乱） 为每个原则提供正面和反面的视觉参考 将风格原则与品牌价值观和消费者洞察关联 建立可操作的品牌内容审核checklist 
+ lens_content-execution-001" data-name="市场分层×品牌支柱×人群细分的内容策略框架" data-q="如何构建一个三维内容策略框架：按市场成熟度分层、将品牌支柱转化为内容IP体系、针对细分人群设计分层沟通？">
+          <button class="lens-head" type="button" aria-expanded="false" aria-controls="lens_content-execution-001-body">
+            <span class="lens-no">16</span>
+            <span class="lens-text">
+              <span class="lens-name">市场分层×品牌支柱×人群细分的内容策略框架</span>
+              <span class="lens-q">如何构建一个三维内容策略框架：按市场成熟度分层、将品牌支柱转化为内容IP体系、针对细分人群设计分层沟通？</span>
+              <span class="lens-flags"><span class="flag ">已确认</span><span class="flag flag-accent">变体 2</span><span class="flag">4 步</span></span>
+            </span>
+            <span class="toggle-mark" aria-hidden="true"></span>
+          </button>
+          <div class="lens-body" id="lens_content-execution-001-body">
+            <div class="lens-body-inner">
+              <div class="lens-body-content">
+                <div class="fields">
+                  <div class="field"><div class="field-label">Use when<span class="zh">适用条件</span></div><div class="field-val"><ul><li>品牌面向多个不同成熟度的市场</li><li>品牌有明确的品牌支柱可转化为内容IP</li></ul></div></div>
+                  <div class="field"><div class="field-label">Skip when<span class="zh">跳过条件</span></div><div class="field-val"><ul><li>品牌只面向单一市场且消费者同质化高</li></ul></div></div>
+                  <div class="field"><div class="field-label">Inputs<span class="zh">所需输入</span></div><div class="field-val"><ul><li>品牌支柱定义</li><li>市场分层数据</li><li>目标消费者细分画像</li></ul></div></div>
+                  <div class="field"><div class="field-label">Operations<span class="zh">操作步骤</span></div><div class="field-val"><ol class="steps"><li>按市场成熟度分层，为每层设定内容策略侧重点（认知建立/价值传递/生活方式/社群归属等）</li><li>将品牌支柱转化为内容IP体系：每个支柱对应一种内容IP类型（产品价值IP/使用场景IP/人物故事IP），定义各IP的角色、内容形式和更新节奏</li><li>针对每类细分人群设计三层递进沟通模型：WHY层（动机理解与共鸣）→WHAT层（利益认知与信任）→HOW层（实践方式与行动指引）</li><li>将三个维度整合为统一的内容策略矩阵</li></ol></div></div>
+                  <div class="field"><div class="field-label">Page structure<span class="zh">页面表达</span></div><div class="field-val"><p class="muted">暂无页面表达结构（可按操作步骤推导）。</p></div></div>
+                  <div class="field"><div class="field-label">Outputs<span class="zh">预期输出</span></div><div class="field-val"><ul><li>三维内容策略矩阵</li></ul></div></div>
+                  <div class="field"><div class="field-label">Failure modes<span class="zh">失效模式</span></div><div class="field-val"><ul><li>内容策略脱离品牌定位——内容创意可能偏离品牌调性</li></ul></div></div>
+                  <div class="field"><div class="field-label">Boundaries<span class="zh">适用边界</span></div><div class="field-val"><ul><li>内容策略脱离品牌定位——内容创意可能偏离品牌调性</li></ul></div></div>
+                  <div class="field"><div class="field-label">Evidence<span class="zh">案例证据</span></div><div class="field-val"><p class="muted">未附案例证据说明。</p></div></div>
+                  <div class="field"><div class="field-label">Variant<span class="zh">变体与参考</span></div><div class="field-val"><div class="variants"><div class="variant"><p class="variant-name">内容策略与执行：如何将品牌传播主题转化为多形式、多场景的内容创意矩阵？...</p><div class="sublabel">适用条件</div><ul><li>品牌需要进行该模块相关的策略分析</li><li>有可获取的相关数据和消费者洞察</li></ul><div class="sublabel">操作步骤</div><ol class="steps"><li>围绕核心传播主题开发多种内容形式（纪录片/播客/社交话题/线下活动）</li><li>将品牌理念融入消费者的日常场景（居家/办公/通勤/周末）</li><li>为每种内容形式设计可独立传播又可互相引流的连接点</li><li>建立「主题→形式→场景→渠道」的内容分发矩阵</li></ol></div><div class="variant"><p class="variant-name">内容策略与执行：如何为品牌建立DOs/DON&#39;Ts风格指南，确保品牌在视觉和内容层面的一致性？...</p><div class="sublabel">适用条件</div><ul><li>品牌需要进行该模块相关的策略分析</li><li>有可获取的相关数据和消费者洞察</li></ul><div class="sublabel">操作步骤</div><ol class="steps"><li>定义品牌核心风格原则（如孩子气vs小大人/简约聪颖vs纷繁杂乱）</li><li>为每个原则提供正面和反面的视觉参考</li><li>将风格原则与品牌价值观和消费者洞察关联</li><li>建立可操作的品牌内容审核checklist</li></ol></div></div></div></div>
+                </div>
+                <div class="idline">
+                  <span>lens_content-execution-001</span>
+                  <button class="copybtn" type="button" data-copy="lens_content-execution-001">复制 ID</button>
+                  <span>lenses/lens_content-execution-001.md · 更新 2026-07-27</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </article>
+        <article class="lens" id="lens_content-execution-002" data-search="品牌人格化定位的消费者体验落地设计 
+ 当品牌有一个人格化定位（如亲切、有趣、专业等），如何将其拆解为可操作的消费者体验设计策略？ 
+ 品牌有一个清晰的人格化定位或品牌人格描述 
+ 品牌与消费者的接触涉及线下体验或社区互动 
+ 品牌与消费者的接触仅限于线上内容触达 
+ 品牌人格化定位描述 
+ 本地文化元素与社区洞察调研 
+ 消费者接触点地图 
+ 将品牌人格化定位拆解为2-3个可操作的体验维度（如唤起熟悉感、营造互动温暖、增加趣味参与等） 
+ 针对每个体验维度设计具体策略：选择什么在地化元素/设计什么互动机制/策划什么形式的活动 
+ 绘制全触点消费者体验地图，将体验设计分配到各触点 
+ 评估各项体验设计的实施优先级和所需资源 
+ 消费者体验设计方案 
+ 体验设计脱离品牌人格——活动创意与品牌定位脱节 
+ 体验设计脱离品牌人格——活动创意与品牌定位脱节 
+  
+ lens_content-execution-002" data-name="品牌人格化定位的消费者体验落地设计" data-q="当品牌有一个人格化定位（如亲切、有趣、专业等），如何将其拆解为可操作的消费者体验设计策略？">
+          <button class="lens-head" type="button" aria-expanded="false" aria-controls="lens_content-execution-002-body">
+            <span class="lens-no">17</span>
+            <span class="lens-text">
+              <span class="lens-name">品牌人格化定位的消费者体验落地设计</span>
+              <span class="lens-q">当品牌有一个人格化定位（如亲切、有趣、专业等），如何将其拆解为可操作的消费者体验设计策略？</span>
+              <span class="lens-flags"><span class="flag ">已确认</span><span class="flag">4 步</span></span>
+            </span>
+            <span class="toggle-mark" aria-hidden="true"></span>
+          </button>
+          <div class="lens-body" id="lens_content-execution-002-body">
+            <div class="lens-body-inner">
+              <div class="lens-body-content">
+                <div class="fields">
+                  <div class="field"><div class="field-label">Use when<span class="zh">适用条件</span></div><div class="field-val"><ul><li>品牌有一个清晰的人格化定位或品牌人格描述</li><li>品牌与消费者的接触涉及线下体验或社区互动</li></ul></div></div>
+                  <div class="field"><div class="field-label">Skip when<span class="zh">跳过条件</span></div><div class="field-val"><ul><li>品牌与消费者的接触仅限于线上内容触达</li></ul></div></div>
+                  <div class="field"><div class="field-label">Inputs<span class="zh">所需输入</span></div><div class="field-val"><ul><li>品牌人格化定位描述</li><li>本地文化元素与社区洞察调研</li><li>消费者接触点地图</li></ul></div></div>
+                  <div class="field"><div class="field-label">Operations<span class="zh">操作步骤</span></div><div class="field-val"><ol class="steps"><li>将品牌人格化定位拆解为2-3个可操作的体验维度（如唤起熟悉感、营造互动温暖、增加趣味参与等）</li><li>针对每个体验维度设计具体策略：选择什么在地化元素/设计什么互动机制/策划什么形式的活动</li><li>绘制全触点消费者体验地图，将体验设计分配到各触点</li><li>评估各项体验设计的实施优先级和所需资源</li></ol></div></div>
+                  <div class="field"><div class="field-label">Page structure<span class="zh">页面表达</span></div><div class="field-val"><p class="muted">暂无页面表达结构（可按操作步骤推导）。</p></div></div>
+                  <div class="field"><div class="field-label">Outputs<span class="zh">预期输出</span></div><div class="field-val"><ul><li>消费者体验设计方案</li></ul></div></div>
+                  <div class="field"><div class="field-label">Failure modes<span class="zh">失效模式</span></div><div class="field-val"><ul><li>体验设计脱离品牌人格——活动创意与品牌定位脱节</li></ul></div></div>
+                  <div class="field"><div class="field-label">Boundaries<span class="zh">适用边界</span></div><div class="field-val"><ul><li>体验设计脱离品牌人格——活动创意与品牌定位脱节</li></ul></div></div>
+                  <div class="field"><div class="field-label">Evidence<span class="zh">案例证据</span></div><div class="field-val"><p class="muted">未附案例证据说明。</p></div></div>
+                  
+                </div>
+                <div class="idline">
+                  <span>lens_content-execution-002</span>
+                  <button class="copybtn" type="button" data-copy="lens_content-execution-002">复制 ID</button>
+                  <span>lenses/lens_content-execution-002.md · 更新 2026-07-27</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </article>
+        <article class="lens" id="lens_content-execution-003" data-search="曝光+转化双轨内容矩阵策略 
+ 如何同时兼顾品牌声量放大和销量转化两个目标，设计曝光轨和转化轨双线并行的内容矩阵？ 
+ 品牌同时有品牌声量和销售转化的双重目标 
+ 内容平台支持从内容到购买的完整链路 
+ 品牌当前只需曝光或只需转化 
+ 同品类或跨品类内容策略标杆案例 
+ 产品线和场景细分 
+ 产品场景归属矩阵 
+ 内容素材库 
+ 曝光轨设计：确立创意向和种草向两条内容路径，按产品线和场景类型规划曝光内容主题与形式 
+ 转化轨设计：规划圈层种草、好物推荐和深度测评三类转化内容，在每种内容中预埋购买链路 
+ 产品×场景归属映射：将各产品按场景类型分类（期待性场景/日常性场景），匹配相应的曝光和转化内容形式 
+ 双轨协同设计：建立曝光内容到转化内容的用户流转路径，统一发布日历确保双轨节奏协调 
+ 双轨内容矩阵 
+ 内容日历 
+ 双轨之间缺乏衔接机制——曝光内容无法有效导流到转化内容 
+ 双轨之间缺乏衔接机制——曝光内容无法有效导流到转化内容 
+  
+ lens_content-execution-003" data-name="曝光+转化双轨内容矩阵策略" data-q="如何同时兼顾品牌声量放大和销量转化两个目标，设计曝光轨和转化轨双线并行的内容矩阵？">
+          <button class="lens-head" type="button" aria-expanded="false" aria-controls="lens_content-execution-003-body">
+            <span class="lens-no">18</span>
+            <span class="lens-text">
+              <span class="lens-name">曝光+转化双轨内容矩阵策略</span>
+              <span class="lens-q">如何同时兼顾品牌声量放大和销量转化两个目标，设计曝光轨和转化轨双线并行的内容矩阵？</span>
+              <span class="lens-flags"><span class="flag ">已确认</span><span class="flag">4 步</span></span>
+            </span>
+            <span class="toggle-mark" aria-hidden="true"></span>
+          </button>
+          <div class="lens-body" id="lens_content-execution-003-body">
+            <div class="lens-body-inner">
+              <div class="lens-body-content">
+                <div class="fields">
+                  <div class="field"><div class="field-label">Use when<span class="zh">适用条件</span></div><div class="field-val"><ul><li>品牌同时有品牌声量和销售转化的双重目标</li><li>内容平台支持从内容到购买的完整链路</li></ul></div></div>
+                  <div class="field"><div class="field-label">Skip when<span class="zh">跳过条件</span></div><div class="field-val"><ul><li>品牌当前只需曝光或只需转化</li></ul></div></div>
+                  <div class="field"><div class="field-label">Inputs<span class="zh">所需输入</span></div><div class="field-val"><ul><li>同品类或跨品类内容策略标杆案例</li><li>产品线和场景细分</li><li>产品场景归属矩阵</li><li>内容素材库</li></ul></div></div>
+                  <div class="field"><div class="field-label">Operations<span class="zh">操作步骤</span></div><div class="field-val"><ol class="steps"><li>曝光轨设计：确立创意向和种草向两条内容路径，按产品线和场景类型规划曝光内容主题与形式</li><li>转化轨设计：规划圈层种草、好物推荐和深度测评三类转化内容，在每种内容中预埋购买链路</li><li>产品×场景归属映射：将各产品按场景类型分类（期待性场景/日常性场景），匹配相应的曝光和转化内容形式</li><li>双轨协同设计：建立曝光内容到转化内容的用户流转路径，统一发布日历确保双轨节奏协调</li></ol></div></div>
+                  <div class="field"><div class="field-label">Page structure<span class="zh">页面表达</span></div><div class="field-val"><p class="muted">暂无页面表达结构（可按操作步骤推导）。</p></div></div>
+                  <div class="field"><div class="field-label">Outputs<span class="zh">预期输出</span></div><div class="field-val"><ul><li>双轨内容矩阵</li><li>内容日历</li></ul></div></div>
+                  <div class="field"><div class="field-label">Failure modes<span class="zh">失效模式</span></div><div class="field-val"><ul><li>双轨之间缺乏衔接机制——曝光内容无法有效导流到转化内容</li></ul></div></div>
+                  <div class="field"><div class="field-label">Boundaries<span class="zh">适用边界</span></div><div class="field-val"><ul><li>双轨之间缺乏衔接机制——曝光内容无法有效导流到转化内容</li></ul></div></div>
+                  <div class="field"><div class="field-label">Evidence<span class="zh">案例证据</span></div><div class="field-val"><p class="muted">未附案例证据说明。</p></div></div>
+                  <div class="field"><div class="field-label">Variant<span class="zh">变体与参考</span></div><div class="field-val"><div class="variants"><div class="variant"><p class="variant-name">历史推导记录：曝光+转化双轨小红书内容矩阵策略</p><p class="note">recipe_content-execution-003</p></div></div></div></div>
+                </div>
+                <div class="idline">
+                  <span>lens_content-execution-003</span>
+                  <button class="copybtn" type="button" data-copy="lens_content-execution-003">复制 ID</button>
+                  <span>lenses/lens_content-execution-003.md · 更新 2026-07-27</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </article></div>
+      </section>
+      <section class="module" id="mod_creator-kol" style="--i:5">
+        <header class="module-head">
+          <div class="mod-no">M06</div>
+          <div>
+            <h2>KOL/达人矩阵策略</h2>
+            <p class="mod-meta">
+              <span><code>mod_creator-kol</code></span>
+              <span>2 个方法</span>
+            </p>
+            <p class="mod-decision">模块「KOL/达人矩阵策略」共收录 2 个可复用方法，经跨案例验证和人工审阅。（版本 6.0.0 · 批准 2026-07-27）</p>
+            <ul class="precond"><li>项目需包含与KOL/达人矩阵策略相关的分析材料</li><li>分析单元需通过B2分段验证</li></ul>
+          </div>
+        </header>
+        <div class="lenslist">
+        <article class="lens" id="lens_creator-kol-001" data-search="kol/达人矩阵分层与预算分配策略 
+ 如何按平台特征和品牌目标设计差异化的达人矩阵金字塔，并合理分配预算和各层级达人的核心任务？ 
+ 品牌需要系统规划和分配kol/达人合作资源 
+ 品牌传播涉及多个层级的达人合作 
+ 品牌不需要达人合作或只需零星投放 
+ 品牌传播目标（声量/种草/转化权重） 
+ 平台达人资源与价格带 
+ 项目预算总额 
+ 按功能角色对达人分类（内容深度型/体验展示型/氛围传播型等），定义各角色的筛选标准和预期贡献 
+ 按平台特征设计差异化的达人金字塔结构：不同平台的内容生态和受众特征决定了最佳的层级配比 
+ 按达人层级和平台维度分配预算，明确各层的预算占比和预期效果kpi 
+ 为每层达人设定核心任务和内容原则（如真实感优先/场景化展示/专业深度等） 
+ 达人矩阵方案 
+ 预算分配表 
+ kol筛选过度依赖粉丝量——互动率和粉丝画像匹配度更重要 
+ kol筛选过度依赖粉丝量——互动率和粉丝画像匹配度更重要 
+  
+ kol/达人矩阵策略：如何围绕品牌社群活动体系设计kol/koc合作矩阵和用户分层运营方案？... 按参与深度将用户分为不同层级（活动参与者/内容贡献者/社群组织者） 为每层设计差异化的激励和成长机制 设计与品牌活动关联的kol/koc合作模式（冠名/内容共创/路线设计） 建立从线上内容消费到线下活动参与再到门店购买的转化闭环 
+ lens_creator-kol-001" data-name="KOL/达人矩阵分层与预算分配策略" data-q="如何按平台特征和品牌目标设计差异化的达人矩阵金字塔，并合理分配预算和各层级达人的核心任务？">
+          <button class="lens-head" type="button" aria-expanded="false" aria-controls="lens_creator-kol-001-body">
+            <span class="lens-no">19</span>
+            <span class="lens-text">
+              <span class="lens-name">KOL/达人矩阵分层与预算分配策略</span>
+              <span class="lens-q">如何按平台特征和品牌目标设计差异化的达人矩阵金字塔，并合理分配预算和各层级达人的核心任务？</span>
+              <span class="lens-flags"><span class="flag ">已确认</span><span class="flag flag-accent">变体 1</span><span class="flag">4 步</span></span>
+            </span>
+            <span class="toggle-mark" aria-hidden="true"></span>
+          </button>
+          <div class="lens-body" id="lens_creator-kol-001-body">
+            <div class="lens-body-inner">
+              <div class="lens-body-content">
+                <div class="fields">
+                  <div class="field"><div class="field-label">Use when<span class="zh">适用条件</span></div><div class="field-val"><ul><li>品牌需要系统规划和分配KOL/达人合作资源</li><li>品牌传播涉及多个层级的达人合作</li></ul></div></div>
+                  <div class="field"><div class="field-label">Skip when<span class="zh">跳过条件</span></div><div class="field-val"><ul><li>品牌不需要达人合作或只需零星投放</li></ul></div></div>
+                  <div class="field"><div class="field-label">Inputs<span class="zh">所需输入</span></div><div class="field-val"><ul><li>品牌传播目标（声量/种草/转化权重）</li><li>平台达人资源与价格带</li><li>项目预算总额</li></ul></div></div>
+                  <div class="field"><div class="field-label">Operations<span class="zh">操作步骤</span></div><div class="field-val"><ol class="steps"><li>按功能角色对达人分类（内容深度型/体验展示型/氛围传播型等），定义各角色的筛选标准和预期贡献</li><li>按平台特征设计差异化的达人金字塔结构：不同平台的内容生态和受众特征决定了最佳的层级配比</li><li>按达人层级和平台维度分配预算，明确各层的预算占比和预期效果KPI</li><li>为每层达人设定核心任务和内容原则（如真实感优先/场景化展示/专业深度等）</li></ol></div></div>
+                  <div class="field"><div class="field-label">Page structure<span class="zh">页面表达</span></div><div class="field-val"><p class="muted">暂无页面表达结构（可按操作步骤推导）。</p></div></div>
+                  <div class="field"><div class="field-label">Outputs<span class="zh">预期输出</span></div><div class="field-val"><ul><li>达人矩阵方案</li><li>预算分配表</li></ul></div></div>
+                  <div class="field"><div class="field-label">Failure modes<span class="zh">失效模式</span></div><div class="field-val"><ul><li>KOL筛选过度依赖粉丝量——互动率和粉丝画像匹配度更重要</li></ul></div></div>
+                  <div class="field"><div class="field-label">Boundaries<span class="zh">适用边界</span></div><div class="field-val"><ul><li>KOL筛选过度依赖粉丝量——互动率和粉丝画像匹配度更重要</li></ul></div></div>
+                  <div class="field"><div class="field-label">Evidence<span class="zh">案例证据</span></div><div class="field-val"><p class="muted">未附案例证据说明。</p></div></div>
+                  <div class="field"><div class="field-label">Variant<span class="zh">变体与参考</span></div><div class="field-val"><div class="variants"><div class="variant"><p class="variant-name">KOL/达人矩阵策略：如何围绕品牌社群活动体系设计KOL/KOC合作矩阵和用户分层运营方案？...</p><div class="sublabel">适用条件</div><ul><li>品牌需要进行该模块相关的策略分析</li><li>有可获取的相关数据和消费者洞察</li></ul><div class="sublabel">操作步骤</div><ol class="steps"><li>按参与深度将用户分为不同层级（活动参与者/内容贡献者/社群组织者）</li><li>为每层设计差异化的激励和成长机制</li><li>设计与品牌活动关联的KOL/KOC合作模式（冠名/内容共创/路线设计）</li><li>建立从线上内容消费到线下活动参与再到门店购买的转化闭环</li></ol></div></div></div></div>
+                </div>
+                <div class="idline">
+                  <span>lens_creator-kol-001</span>
+                  <button class="copybtn" type="button" data-copy="lens_creator-kol-001">复制 ID</button>
+                  <span>lenses/lens_creator-kol-001.md · 更新 2026-07-27</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </article>
+        <article class="lens" id="lens_creator-kol-002" data-search="品牌倡导者涟漪分层与kol生态构建 
+ 如何构建从核心专业用户逐层传导至大众消费者的品牌倡导者体系，并建立可持续的kol生态运营机制？ 
+ 品牌需要建立长期可持续的达人/kol/koc生态 
+ 品牌有可识别的核心用户或倡导者群体 
+ 品牌只需要一次性的达人投放 
+ 品牌核心用户群体特征分析 
+ 领域内倡导者体系建设标杆品牌案例 
+ 目标平台kol生态数据 
+ 研究领域内标杆品牌的倡导者分层结构和传导机制，提取可借鉴的分层逻辑和角色定义 
+ 结合品牌自身用户画像和社区特征，绘制品牌专属的倡导者涟漪传导结构 
+ 定义各层级的招募标准、权益体系（物质激励/荣誉认可/成长机会/社区归属）、内容角色和激励机制 
+ 设计长期生态运营机制：招募流程/日常管理/内容共创/效果评估/升降级规则/社区管理模式 
+ 品牌倡导者分层框架 
+ kol生态构建方案 
+ 品牌倡导者体系需要长期投入——短期kpi导向可能破坏社区信任 
+ 品牌倡导者体系需要长期投入——短期kpi导向可能破坏社区信任 
+  
+ lens_creator-kol-002" data-name="品牌倡导者涟漪分层与KOL生态构建" data-q="如何构建从核心专业用户逐层传导至大众消费者的品牌倡导者体系，并建立可持续的KOL生态运营机制？">
+          <button class="lens-head" type="button" aria-expanded="false" aria-controls="lens_creator-kol-002-body">
+            <span class="lens-no">20</span>
+            <span class="lens-text">
+              <span class="lens-name">品牌倡导者涟漪分层与KOL生态构建</span>
+              <span class="lens-q">如何构建从核心专业用户逐层传导至大众消费者的品牌倡导者体系，并建立可持续的KOL生态运营机制？</span>
+              <span class="lens-flags"><span class="flag ">已确认</span><span class="flag">4 步</span></span>
+            </span>
+            <span class="toggle-mark" aria-hidden="true"></span>
+          </button>
+          <div class="lens-body" id="lens_creator-kol-002-body">
+            <div class="lens-body-inner">
+              <div class="lens-body-content">
+                <div class="fields">
+                  <div class="field"><div class="field-label">Use when<span class="zh">适用条件</span></div><div class="field-val"><ul><li>品牌需要建立长期可持续的达人/KOL/KOC生态</li><li>品牌有可识别的核心用户或倡导者群体</li></ul></div></div>
+                  <div class="field"><div class="field-label">Skip when<span class="zh">跳过条件</span></div><div class="field-val"><ul><li>品牌只需要一次性的达人投放</li></ul></div></div>
+                  <div class="field"><div class="field-label">Inputs<span class="zh">所需输入</span></div><div class="field-val"><ul><li>品牌核心用户群体特征分析</li><li>领域内倡导者体系建设标杆品牌案例</li><li>目标平台KOL生态数据</li></ul></div></div>
+                  <div class="field"><div class="field-label">Operations<span class="zh">操作步骤</span></div><div class="field-val"><ol class="steps"><li>研究领域内标杆品牌的倡导者分层结构和传导机制，提取可借鉴的分层逻辑和角色定义</li><li>结合品牌自身用户画像和社区特征，绘制品牌专属的倡导者涟漪传导结构</li><li>定义各层级的招募标准、权益体系（物质激励/荣誉认可/成长机会/社区归属）、内容角色和激励机制</li><li>设计长期生态运营机制：招募流程/日常管理/内容共创/效果评估/升降级规则/社区管理模式</li></ol></div></div>
+                  <div class="field"><div class="field-label">Page structure<span class="zh">页面表达</span></div><div class="field-val"><p class="muted">暂无页面表达结构（可按操作步骤推导）。</p></div></div>
+                  <div class="field"><div class="field-label">Outputs<span class="zh">预期输出</span></div><div class="field-val"><ul><li>品牌倡导者分层框架</li><li>KOL生态构建方案</li></ul></div></div>
+                  <div class="field"><div class="field-label">Failure modes<span class="zh">失效模式</span></div><div class="field-val"><ul><li>品牌倡导者体系需要长期投入——短期KPI导向可能破坏社区信任</li></ul></div></div>
+                  <div class="field"><div class="field-label">Boundaries<span class="zh">适用边界</span></div><div class="field-val"><ul><li>品牌倡导者体系需要长期投入——短期KPI导向可能破坏社区信任</li></ul></div></div>
+                  <div class="field"><div class="field-label">Evidence<span class="zh">案例证据</span></div><div class="field-val"><p class="muted">未附案例证据说明。</p></div></div>
+                  
+                </div>
+                <div class="idline">
+                  <span>lens_creator-kol-002</span>
+                  <button class="copybtn" type="button" data-copy="lens_creator-kol-002">复制 ID</button>
+                  <span>lenses/lens_creator-kol-002.md · 更新 2026-07-27</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </article></div>
+      </section>
+      <section class="module" id="mod_execution-planning" style="--i:6">
+        <header class="module-head">
+          <div class="mod-no">M07</div>
+          <div>
+            <h2>执行规划与预算节奏</h2>
+            <p class="mod-meta">
+              <span><code>mod_execution-planning</code></span>
+              <span>2 个方法</span>
+            </p>
+            <p class="mod-decision">模块「执行规划与预算节奏」共收录 2 个可复用方法，经跨案例验证和人工审阅。（版本 6.0.0 · 批准 2026-07-27）</p>
+            <ul class="precond"><li>项目需包含与执行规划与预算节奏相关的分析材料</li><li>分析单元需通过B2分段验证</li></ul>
+          </div>
+        </header>
+        <div class="lenslist">
+        <article class="lens" id="lens_execution-planning-001" data-search="年度预算分配与传播节奏规划 
+ 如何将传播周期划分为清晰阶段，按阶段分配预算，并建立完整的kpi体系？ 
+ 品牌需要规划年度或项目周期的传播节奏和预算分配 
+ 已有品牌传播目标和总预算 
+ 项目只需规划单一季度或单一campaign的预算 
+ 项目/年度总预算 
+ 产品线/业务线清单与优先级 
+ 营销节点日历 
+ 各渠道成本和效能基准 
+ 划分传播周期为3-5个阶段（如建立期→放大期→沉淀期），定义每阶段的核心目标和策略重心 
+ 按阶段分配预算（金额+占比），形成预算矩阵 
+ 设计预算结构（达人种草/信息流投放/品牌官方内容等各项占比），说明结构设计的策略依据 
+ 设定各阶段的kpi体系和关键里程碑 
+ 年度传播预算方案 
+ kpi体系 
+ 年度规划过于刚性——需预留应对市场变化的弹性空间 
+ 年度规划过于刚性——需预留应对市场变化的弹性空间 
+  
+ 执行规划与预算节奏：如何围绕品牌核心场景设计可规模化复制的线下活动体系，将品牌理念落地为消费者可参与... 围绕品牌核心场景（如城市行走）设计多种活动变体（看展/逛街/城市漫游/夜间行走等） 为每种活动设计标准化的操作流程（路线设计/合作方/kol/参与者激励） 建立活动品牌化体系（命名/视觉/社交话题）便于传播 设计活动参与者到门店购买的转化机制 
+ lens_execution-planning-001" data-name="年度预算分配与传播节奏规划" data-q="如何将传播周期划分为清晰阶段，按阶段分配预算，并建立完整的KPI体系？">
+          <button class="lens-head" type="button" aria-expanded="false" aria-controls="lens_execution-planning-001-body">
+            <span class="lens-no">21</span>
+            <span class="lens-text">
+              <span class="lens-name">年度预算分配与传播节奏规划</span>
+              <span class="lens-q">如何将传播周期划分为清晰阶段，按阶段分配预算，并建立完整的KPI体系？</span>
+              <span class="lens-flags"><span class="flag ">已确认</span><span class="flag flag-accent">变体 1</span><span class="flag">4 步</span></span>
+            </span>
+            <span class="toggle-mark" aria-hidden="true"></span>
+          </button>
+          <div class="lens-body" id="lens_execution-planning-001-body">
+            <div class="lens-body-inner">
+              <div class="lens-body-content">
+                <div class="fields">
+                  <div class="field"><div class="field-label">Use when<span class="zh">适用条件</span></div><div class="field-val"><ul><li>品牌需要规划年度或项目周期的传播节奏和预算分配</li><li>已有品牌传播目标和总预算</li></ul></div></div>
+                  <div class="field"><div class="field-label">Skip when<span class="zh">跳过条件</span></div><div class="field-val"><ul><li>项目只需规划单一季度或单一Campaign的预算</li></ul></div></div>
+                  <div class="field"><div class="field-label">Inputs<span class="zh">所需输入</span></div><div class="field-val"><ul><li>项目/年度总预算</li><li>产品线/业务线清单与优先级</li><li>营销节点日历</li><li>各渠道成本和效能基准</li></ul></div></div>
+                  <div class="field"><div class="field-label">Operations<span class="zh">操作步骤</span></div><div class="field-val"><ol class="steps"><li>划分传播周期为3-5个阶段（如建立期→放大期→沉淀期），定义每阶段的核心目标和策略重心</li><li>按阶段分配预算（金额+占比），形成预算矩阵</li><li>设计预算结构（达人种草/信息流投放/品牌官方内容等各项占比），说明结构设计的策略依据</li><li>设定各阶段的KPI体系和关键里程碑</li></ol></div></div>
+                  <div class="field"><div class="field-label">Page structure<span class="zh">页面表达</span></div><div class="field-val"><p class="muted">暂无页面表达结构（可按操作步骤推导）。</p></div></div>
+                  <div class="field"><div class="field-label">Outputs<span class="zh">预期输出</span></div><div class="field-val"><ul><li>年度传播预算方案</li><li>KPI体系</li></ul></div></div>
+                  <div class="field"><div class="field-label">Failure modes<span class="zh">失效模式</span></div><div class="field-val"><ul><li>年度规划过于刚性——需预留应对市场变化的弹性空间</li></ul></div></div>
+                  <div class="field"><div class="field-label">Boundaries<span class="zh">适用边界</span></div><div class="field-val"><ul><li>年度规划过于刚性——需预留应对市场变化的弹性空间</li></ul></div></div>
+                  <div class="field"><div class="field-label">Evidence<span class="zh">案例证据</span></div><div class="field-val"><p class="muted">未附案例证据说明。</p></div></div>
+                  <div class="field"><div class="field-label">Variant<span class="zh">变体与参考</span></div><div class="field-val"><div class="variants"><div class="variant"><p class="variant-name">执行规划与预算节奏：如何围绕品牌核心场景设计可规模化复制的线下活动体系，将品牌理念落地为消费者可参与...</p><div class="sublabel">适用条件</div><ul><li>品牌需要进行该模块相关的策略分析</li><li>有可获取的相关数据和消费者洞察</li></ul><div class="sublabel">操作步骤</div><ol class="steps"><li>围绕品牌核心场景（如城市行走）设计多种活动变体（看展/逛街/城市漫游/夜间行走等）</li><li>为每种活动设计标准化的操作流程（路线设计/合作方/KOL/参与者激励）</li><li>建立活动品牌化体系（命名/视觉/社交话题）便于传播</li><li>设计活动参与者到门店购买的转化机制</li></ol></div></div></div></div>
+                </div>
+                <div class="idline">
+                  <span>lens_execution-planning-001</span>
+                  <button class="copybtn" type="button" data-copy="lens_execution-planning-001">复制 ID</button>
+                  <span>lenses/lens_execution-planning-001.md · 更新 2026-07-27</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </article>
+        <article class="lens" id="lens_execution-planning-002" data-search="年度内容日历与主题规划 
+ 如何规划年度campaign主题和月度always-on内容节奏，使品牌传播既有爆发力又有日常渗透力？ 
+ 品牌需要全年内容规划而非单次执行 
+ 品牌只需短期（1-3个月）的内容规划 
+ 年度品牌/传播主题 
+ 产品上市节奏 
+ 节日/节点日历 
+ 目标人群内容偏好 
+ 确定季度campaign主题，确保与品牌年度核心主题保持一致 
+ 按月度规划always-on内容的主题方向和发布节奏 
+ 将各内容类型匹配到合适的目标人群和发布平台 
+ 整合为年度内容日历总览，标注campaign爆发期和日常维护期的资源分配 
+ 年度内容日历 
+ campaign×always-on节奏规划 
+ 传播节奏与产品上市节奏不同步 
+ 传播节奏与产品上市节奏不同步 
+  
+ lens_execution-planning-002" data-name="年度内容日历与主题规划" data-q="如何规划年度Campaign主题和月度Always-on内容节奏，使品牌传播既有爆发力又有日常渗透力？">
+          <button class="lens-head" type="button" aria-expanded="false" aria-controls="lens_execution-planning-002-body">
+            <span class="lens-no">22</span>
+            <span class="lens-text">
+              <span class="lens-name">年度内容日历与主题规划</span>
+              <span class="lens-q">如何规划年度Campaign主题和月度Always-on内容节奏，使品牌传播既有爆发力又有日常渗透力？</span>
+              <span class="lens-flags"><span class="flag ">已确认</span><span class="flag">4 步</span></span>
+            </span>
+            <span class="toggle-mark" aria-hidden="true"></span>
+          </button>
+          <div class="lens-body" id="lens_execution-planning-002-body">
+            <div class="lens-body-inner">
+              <div class="lens-body-content">
+                <div class="fields">
+                  <div class="field"><div class="field-label">Use when<span class="zh">适用条件</span></div><div class="field-val"><ul><li>品牌需要全年内容规划而非单次执行</li></ul></div></div>
+                  <div class="field"><div class="field-label">Skip when<span class="zh">跳过条件</span></div><div class="field-val"><ul><li>品牌只需短期（1-3个月）的内容规划</li></ul></div></div>
+                  <div class="field"><div class="field-label">Inputs<span class="zh">所需输入</span></div><div class="field-val"><ul><li>年度品牌/传播主题</li><li>产品上市节奏</li><li>节日/节点日历</li><li>目标人群内容偏好</li></ul></div></div>
+                  <div class="field"><div class="field-label">Operations<span class="zh">操作步骤</span></div><div class="field-val"><ol class="steps"><li>确定季度Campaign主题，确保与品牌年度核心主题保持一致</li><li>按月度规划Always-on内容的主题方向和发布节奏</li><li>将各内容类型匹配到合适的目标人群和发布平台</li><li>整合为年度内容日历总览，标注Campaign爆发期和日常维护期的资源分配</li></ol></div></div>
+                  <div class="field"><div class="field-label">Page structure<span class="zh">页面表达</span></div><div class="field-val"><p class="muted">暂无页面表达结构（可按操作步骤推导）。</p></div></div>
+                  <div class="field"><div class="field-label">Outputs<span class="zh">预期输出</span></div><div class="field-val"><ul><li>年度内容日历</li><li>Campaign×Always-on节奏规划</li></ul></div></div>
+                  <div class="field"><div class="field-label">Failure modes<span class="zh">失效模式</span></div><div class="field-val"><ul><li>传播节奏与产品上市节奏不同步</li></ul></div></div>
+                  <div class="field"><div class="field-label">Boundaries<span class="zh">适用边界</span></div><div class="field-val"><ul><li>传播节奏与产品上市节奏不同步</li></ul></div></div>
+                  <div class="field"><div class="field-label">Evidence<span class="zh">案例证据</span></div><div class="field-val"><p class="muted">未附案例证据说明。</p></div></div>
+                  
+                </div>
+                <div class="idline">
+                  <span>lens_execution-planning-002</span>
+                  <button class="copybtn" type="button" data-copy="lens_execution-planning-002">复制 ID</button>
+                  <span>lenses/lens_execution-planning-002.md · 更新 2026-07-27</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </article></div>
+      </section>
+      <section class="module" id="mod_market-category" style="--i:7">
+        <header class="module-head">
+          <div class="mod-no">M08</div>
+          <div>
+            <h2>市场与品类分析</h2>
+            <p class="mod-meta">
+              <span><code>mod_market-category</code></span>
+              <span>1 个方法</span>
+            </p>
+            <p class="mod-decision">模块「市场与品类分析」新增 1 个可复用方法，源自某运动品牌跑步户外策略案例。（版本 7.0.0 · 批准 2026-07-27）</p>
+            <ul class="precond"><li>项目需包含品类市场趋势数据和消费者行为变化数据</li><li>需要从宏观趋势到品类机会的完整推导链路</li></ul>
+          </div>
+        </header>
+        <div class="lenslist">
+        <article class="lens" id="lens_mod_market-category-38133da8" data-search="社会趋势驱动的品类机会识别 
+ 当消费者生活方式的宏观趋势发生变化时，如何将社会性趋势信号转化为具体的品类增长机会判断？ 
+ 品类增长动力主要受消费者生活方式变迁驱动 
+ 有可获取的社会趋势报告、消费者行为变化数据 
+ 需要从宏观趋势出发推导品类进入或扩张决策 
+ 品类受政策、技术等非消费者趋势的刚性因素驱动为主 
+ 缺乏可靠的消费者趋势数据源 
+ 社会/消费趋势研究报告（如平台年度趋势预测） 
+ 品类市场规模和增长率历史数据 
+ 消费者生活方式变化数据（如运动参与率、健康意识等） 
+ 品牌在品类中的现有份额和渗透率 
+ 竞品在品类中的布局动态 
+ 捕捉社会趋势信号：监测主要平台和趋势报告，识别与品类相关的消费者生活方式变化方向（如压力释放需求/轻量化运动/健康关注等） 
+ 量化趋势影响：将趋势信号与品类增长数据关联，计算趋势相关的品类增长空间和可持续性 
+ 竞争格局评估：分析品类中已有竞品数量和定位，判断品类竞争阶段（蓝海/红海/分化期），评估进入门槛 
+ 品牌契合度分析：将品类机会与品牌核心能力和发展战略匹配，判断品类扩张的品牌合理性 
+ 定位策略推导：基于以上分析，输出品牌在品类中的进入定位和首发策略建议 
+ 社会趋势→品类机会推导报告 
+ 品类竞争阶段判断与进入可行性分析 
+ 品牌品类定位策略 
+ 趋势信号过度解读，将短期热点误判为长期趋势 
+ 品类机会判断忽略了供给侧能力和渠道可行性 
+ 品牌能力与品类需求不匹配 
+ 该方法适用于消费品领域，特别是与消费者生活方式直接相关的品类 
+ 趋势分析需区分短期热点和结构性趋势 
+ 源自某运动品牌跑步户外策略：从&#39;舒适解压成为社会新风潮&#39;和&#39;轻运动新经济&#39;趋势出发，分析户外鞋服市场的两位数增长率，得出该品牌应从&#39;城市户外&#39;方向切入户外品类的结论 
+ 趋势信号扫描 概述影响品类的消费者生活方式趋势变化。可以从平台报告、社会观察、消费数据等任何可用来源提炼，核心是回答&#39;消费者在发生什么变化，这对品类意味着什么&#39; 
+ 品类机会评估 将趋势信号转化为品类层面的机会判断：品类规模与增长空间、竞争格局（谁在、多拥挤）、消费者需求缺口。不需要精确数字，趋势判断+定性评估即可 
+ 品牌适配性判断 评估品牌进入该品类的可行性：品牌核心能力是否匹配、消费者认知是否有基础、渠道供应链是否支持。从战略一致性角度判断是&#39;应该做&#39;还是&#39;能做&#39;还是&#39;两可&#39; 
+ 进入策略与节奏 如果结论是进入，输出品类定位建议和分阶段推进节奏（试水→验证→放量）。如果结论是不进入或不急于进入，说明判断理由和需要等待的信号条件 
+ 市场与品类分析：如何分析一个尚未成熟的品类的市场机会和品牌进入空间？... 分析品类的市场规模/增速/集中度指标 与相邻成熟品类（如成人服饰）进行对标比较 识别品类尚未成熟的结构性原因（消费者/渠道/品牌供给） 判断品类的未来发展方向和品牌可占据的定位 
+ 市场与品类分析：如何从社会文化趋势（如轻运动经济）出发，识别品类的结构性增长机会？... 捕捉社会文化宏观趋势信号（减压/轻量健身/运动社交化） 分析趋势对品类市场规模和结构的影响 识别趋势驱动下品类内新旧赛道的更替 定义品牌在趋势中的角色和机会空间 
+ 市场与品类分析：如何结合品类市场数据和消费者参与趋势，评估品牌进入一个新品类的可行性和差异化赛道... 分析目标品类的市场规模/增速/竞争集中度 绘制品类竞争格局图谱（按品牌定位维度） 分析消费者参与趋势数据（年龄/场景/动机/结伴方式） 从数据中识别品牌可进入的差异化空间 
+ lens_mod_market-category-38133da8" data-name="社会趋势驱动的品类机会识别" data-q="当消费者生活方式的宏观趋势发生变化时，如何将社会性趋势信号转化为具体的品类增长机会判断？">
+          <button class="lens-head" type="button" aria-expanded="false" aria-controls="lens_mod_market-category-38133da8-body">
+            <span class="lens-no">23</span>
+            <span class="lens-text">
+              <span class="lens-name">社会趋势驱动的品类机会识别</span>
+              <span class="lens-q">当消费者生活方式的宏观趋势发生变化时，如何将社会性趋势信号转化为具体的品类增长机会判断？</span>
+              <span class="lens-flags"><span class="flag ">已确认</span><span class="flag flag-accent">变体 3</span><span class="flag">5 步</span><span class="flag flag-accent">4 页表达</span></span>
+            </span>
+            <span class="toggle-mark" aria-hidden="true"></span>
+          </button>
+          <div class="lens-body" id="lens_mod_market-category-38133da8-body">
+            <div class="lens-body-inner">
+              <div class="lens-body-content">
+                <div class="fields">
+                  <div class="field"><div class="field-label">Use when<span class="zh">适用条件</span></div><div class="field-val"><ul><li>品类增长动力主要受消费者生活方式变迁驱动</li><li>有可获取的社会趋势报告、消费者行为变化数据</li><li>需要从宏观趋势出发推导品类进入或扩张决策</li></ul></div></div>
+                  <div class="field"><div class="field-label">Skip when<span class="zh">跳过条件</span></div><div class="field-val"><ul><li>品类受政策、技术等非消费者趋势的刚性因素驱动为主</li><li>缺乏可靠的消费者趋势数据源</li></ul></div></div>
+                  <div class="field"><div class="field-label">Inputs<span class="zh">所需输入</span></div><div class="field-val"><ul><li>社会/消费趋势研究报告（如平台年度趋势预测）</li><li>品类市场规模和增长率历史数据</li><li>消费者生活方式变化数据（如运动参与率、健康意识等）</li><li>品牌在品类中的现有份额和渗透率</li><li>竞品在品类中的布局动态</li></ul></div></div>
+                  <div class="field"><div class="field-label">Operations<span class="zh">操作步骤</span></div><div class="field-val"><ol class="steps"><li>捕捉社会趋势信号：监测主要平台和趋势报告，识别与品类相关的消费者生活方式变化方向（如压力释放需求/轻量化运动/健康关注等）</li><li>量化趋势影响：将趋势信号与品类增长数据关联，计算趋势相关的品类增长空间和可持续性</li><li>竞争格局评估：分析品类中已有竞品数量和定位，判断品类竞争阶段（蓝海/红海/分化期），评估进入门槛</li><li>品牌契合度分析：将品类机会与品牌核心能力和发展战略匹配，判断品类扩张的品牌合理性</li><li>定位策略推导：基于以上分析，输出品牌在品类中的进入定位和首发策略建议</li></ol></div></div>
+                  <div class="field"><div class="field-label">Page structure<span class="zh">页面表达</span></div><div class="field-val"><ul><li><b>P1 · 趋势信号扫描</b><br><span class="note">概述影响品类的消费者生活方式趋势变化。可以从平台报告、社会观察、消费数据等任何可用来源提炼，核心是回答&#39;消费者在发生什么变化，这对品类意味着什么&#39;</span></li><li><b>P2 · 品类机会评估</b><br><span class="note">将趋势信号转化为品类层面的机会判断：品类规模与增长空间、竞争格局（谁在、多拥挤）、消费者需求缺口。不需要精确数字，趋势判断+定性评估即可</span></li><li><b>P3 · 品牌适配性判断</b><br><span class="note">评估品牌进入该品类的可行性：品牌核心能力是否匹配、消费者认知是否有基础、渠道供应链是否支持。从战略一致性角度判断是&#39;应该做&#39;还是&#39;能做&#39;还是&#39;两可&#39;</span></li><li><b>P4 · 进入策略与节奏</b><br><span class="note">如果结论是进入，输出品类定位建议和分阶段推进节奏（试水→验证→放量）。如果结论是不进入或不急于进入，说明判断理由和需要等待的信号条件</span></li></ul></div></div>
+                  <div class="field"><div class="field-label">Outputs<span class="zh">预期输出</span></div><div class="field-val"><ul><li>社会趋势→品类机会推导报告</li><li>品类竞争阶段判断与进入可行性分析</li><li>品牌品类定位策略</li></ul></div></div>
+                  <div class="field"><div class="field-label">Failure modes<span class="zh">失效模式</span></div><div class="field-val"><ul><li>趋势信号过度解读，将短期热点误判为长期趋势</li><li>品类机会判断忽略了供给侧能力和渠道可行性</li><li>品牌能力与品类需求不匹配</li></ul></div></div>
+                  <div class="field"><div class="field-label">Boundaries<span class="zh">适用边界</span></div><div class="field-val"><ul><li>该方法适用于消费品领域，特别是与消费者生活方式直接相关的品类</li><li>趋势分析需区分短期热点和结构性趋势</li></ul></div></div>
+                  <div class="field"><div class="field-label">Evidence<span class="zh">案例证据</span></div><div class="field-val"><p>源自某运动品牌跑步户外策略：从&#39;舒适解压成为社会新风潮&#39;和&#39;轻运动新经济&#39;趋势出发，分析户外鞋服市场的两位数增长率，得出该品牌应从&#39;城市户外&#39;方向切入户外品类的结论</p></div></div>
+                  <div class="field"><div class="field-label">Variant<span class="zh">变体与参考</span></div><div class="field-val"><div class="variants"><div class="variant"><p class="variant-name">市场与品类分析：如何分析一个尚未成熟的品类的市场机会和品牌进入空间？...</p><div class="sublabel">适用条件</div><ul><li>品牌需要进行该模块相关的策略分析</li><li>有可获取的相关数据和消费者洞察</li></ul><div class="sublabel">操作步骤</div><ol class="steps"><li>分析品类的市场规模/增速/集中度指标</li><li>与相邻成熟品类（如成人服饰）进行对标比较</li><li>识别品类尚未成熟的结构性原因（消费者/渠道/品牌供给）</li><li>判断品类的未来发展方向和品牌可占据的定位</li></ol></div><div class="variant"><p class="variant-name">市场与品类分析：如何从社会文化趋势（如轻运动经济）出发，识别品类的结构性增长机会？...</p><div class="sublabel">适用条件</div><ul><li>品牌需要进行该模块相关的策略分析</li><li>有可获取的相关数据和消费者洞察</li></ul><div class="sublabel">操作步骤</div><ol class="steps"><li>捕捉社会文化宏观趋势信号（减压/轻量健身/运动社交化）</li><li>分析趋势对品类市场规模和结构的影响</li><li>识别趋势驱动下品类内新旧赛道的更替</li><li>定义品牌在趋势中的角色和机会空间</li></ol></div><div class="variant"><p class="variant-name">市场与品类分析：如何结合品类市场数据和消费者参与趋势，评估品牌进入一个新品类的可行性和差异化赛道...</p><div class="sublabel">适用条件</div><ul><li>品牌需要进行该模块相关的策略分析</li><li>有可获取的相关数据和消费者洞察</li></ul><div class="sublabel">操作步骤</div><ol class="steps"><li>分析目标品类的市场规模/增速/竞争集中度</li><li>绘制品类竞争格局图谱（按品牌定位维度）</li><li>分析消费者参与趋势数据（年龄/场景/动机/结伴方式）</li><li>从数据中识别品牌可进入的差异化空间</li></ol></div></div></div></div>
+                </div>
+                <div class="idline">
+                  <span>lens_mod_market-category-38133da8</span>
+                  <button class="copybtn" type="button" data-copy="lens_mod_market-category-38133da8">复制 ID</button>
+                  <span>lenses/lens_mod_market-category-38133da8.md · 更新 2026-07-27</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </article></div>
+      </section>
+      <section class="module" id="mod_measurement" style="--i:8">
+        <header class="module-head">
+          <div class="mod-no">M09</div>
+          <div>
+            <h2>效果衡量与KPI</h2>
+            <p class="mod-meta">
+              <span><code>mod_measurement</code></span>
+              <span>2 个方法</span>
+            </p>
+            <p class="mod-decision">模块「效果衡量与KPI」共收录 2 个可复用方法，经跨案例验证和人工审阅。（版本 5.0.0 · 批准 2026-07-25）</p>
+            <ul class="precond"><li>项目需包含与效果衡量与KPI相关的分析材料</li><li>分析单元需通过B2分段验证</li></ul>
+          </div>
+        </header>
+        <div class="lenslist">
+        <article class="lens" id="lens_measurement-001" data-search="年度投放效果测量与品类竞争格局分析 
+ 如何系统衡量年度投放效果，并将品牌表现与品类竞争格局关联分析以指导下一周期优化？ 
+ 品牌已完成至少一个周期的投放，积累了足够的衡量数据 
+ 投放数据积累不足 
+ 年度投放消耗/曝光/互动/转化数据 
+ 关键词soc/sov占比数据 
+ 人群渗透率与重合度年度对比 
+ 汇总年度投放核心指标（消耗/曝光量/互动量/转化量/roi等），对比目标评估达成情况 
+ 按渠道和campaign维度拆解效果数据，识别高效投放组合和低效投入 
+ 分析品类竞争格局：品牌在品类关键词中的占比、人群渗透率和年度变化趋势 
+ 基于效果和竞争分析，提出下一周期的渠道/预算/内容优化方向 
+ 年度投放效果报告 
+ 优化策略建议 
+ 归因模型选择影响结论——不同归因方式可能导致相反的优化方向 
+ 归因模型选择影响结论——不同归因方式可能导致相反的优化方向 
+  
+ lens_measurement-001" data-name="年度投放效果测量与品类竞争格局分析" data-q="如何系统衡量年度投放效果，并将品牌表现与品类竞争格局关联分析以指导下一周期优化？">
+          <button class="lens-head" type="button" aria-expanded="false" aria-controls="lens_measurement-001-body">
+            <span class="lens-no">24</span>
+            <span class="lens-text">
+              <span class="lens-name">年度投放效果测量与品类竞争格局分析</span>
+              <span class="lens-q">如何系统衡量年度投放效果，并将品牌表现与品类竞争格局关联分析以指导下一周期优化？</span>
+              <span class="lens-flags"><span class="flag ">已确认</span><span class="flag">4 步</span></span>
+            </span>
+            <span class="toggle-mark" aria-hidden="true"></span>
+          </button>
+          <div class="lens-body" id="lens_measurement-001-body">
+            <div class="lens-body-inner">
+              <div class="lens-body-content">
+                <div class="fields">
+                  <div class="field"><div class="field-label">Use when<span class="zh">适用条件</span></div><div class="field-val"><ul><li>品牌已完成至少一个周期的投放，积累了足够的衡量数据</li></ul></div></div>
+                  <div class="field"><div class="field-label">Skip when<span class="zh">跳过条件</span></div><div class="field-val"><ul><li>投放数据积累不足</li></ul></div></div>
+                  <div class="field"><div class="field-label">Inputs<span class="zh">所需输入</span></div><div class="field-val"><ul><li>年度投放消耗/曝光/互动/转化数据</li><li>关键词SOC/SOV占比数据</li><li>人群渗透率与重合度年度对比</li></ul></div></div>
+                  <div class="field"><div class="field-label">Operations<span class="zh">操作步骤</span></div><div class="field-val"><ol class="steps"><li>汇总年度投放核心指标（消耗/曝光量/互动量/转化量/ROI等），对比目标评估达成情况</li><li>按渠道和Campaign维度拆解效果数据，识别高效投放组合和低效投入</li><li>分析品类竞争格局：品牌在品类关键词中的占比、人群渗透率和年度变化趋势</li><li>基于效果和竞争分析，提出下一周期的渠道/预算/内容优化方向</li></ol></div></div>
+                  <div class="field"><div class="field-label">Page structure<span class="zh">页面表达</span></div><div class="field-val"><p class="muted">暂无页面表达结构（可按操作步骤推导）。</p></div></div>
+                  <div class="field"><div class="field-label">Outputs<span class="zh">预期输出</span></div><div class="field-val"><ul><li>年度投放效果报告</li><li>优化策略建议</li></ul></div></div>
+                  <div class="field"><div class="field-label">Failure modes<span class="zh">失效模式</span></div><div class="field-val"><ul><li>归因模型选择影响结论——不同归因方式可能导致相反的优化方向</li></ul></div></div>
+                  <div class="field"><div class="field-label">Boundaries<span class="zh">适用边界</span></div><div class="field-val"><ul><li>归因模型选择影响结论——不同归因方式可能导致相反的优化方向</li></ul></div></div>
+                  <div class="field"><div class="field-label">Evidence<span class="zh">案例证据</span></div><div class="field-val"><p class="muted">未附案例证据说明。</p></div></div>
+                  
+                </div>
+                <div class="idline">
+                  <span>lens_measurement-001</span>
+                  <button class="copybtn" type="button" data-copy="lens_measurement-001">复制 ID</button>
+                  <span>lenses/lens_measurement-001.md · 更新 2026-07-25</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </article>
+        <article class="lens" id="lens_measurement-002" data-search="品牌舆情监测与口碑维护体系 
+ 如何建立系统化的品牌舆情监测体系，并设计从问题识别到正面覆盖的完整口碑维护方案？ 
+ 品牌面临舆情风险或需要建立系统化的口碑管理机制 
+ 品牌知名度不足以产生规模化的舆情讨论 
+ 品牌nps与大盘对比 
+ 首屏负面率数据 
+ 负面词云 
+ 追踪品牌关键舆情指标（nps/首屏负面率/负面高频词等）的变化趋势 
+ 建立舆情管控闭环流程：问题识别监测→正面回应机制→持续舆情维护→正面内容覆盖建设 
+ 梳理高频负面问题并建立标准应对话术库 
+ 设计口碑维护的操作流程、响应时效和团队分工 
+ 舆情管控体系方案 
+ 舆情监测敏感度阈值设置不当——过敏感导致噪音，过迟钝漏掉关键信号 
+ 舆情监测敏感度阈值设置不当——过敏感导致噪音，过迟钝漏掉关键信号 
+  
+ lens_measurement-002" data-name="品牌舆情监测与口碑维护体系" data-q="如何建立系统化的品牌舆情监测体系，并设计从问题识别到正面覆盖的完整口碑维护方案？">
+          <button class="lens-head" type="button" aria-expanded="false" aria-controls="lens_measurement-002-body">
+            <span class="lens-no">25</span>
+            <span class="lens-text">
+              <span class="lens-name">品牌舆情监测与口碑维护体系</span>
+              <span class="lens-q">如何建立系统化的品牌舆情监测体系，并设计从问题识别到正面覆盖的完整口碑维护方案？</span>
+              <span class="lens-flags"><span class="flag ">已确认</span><span class="flag">4 步</span></span>
+            </span>
+            <span class="toggle-mark" aria-hidden="true"></span>
+          </button>
+          <div class="lens-body" id="lens_measurement-002-body">
+            <div class="lens-body-inner">
+              <div class="lens-body-content">
+                <div class="fields">
+                  <div class="field"><div class="field-label">Use when<span class="zh">适用条件</span></div><div class="field-val"><ul><li>品牌面临舆情风险或需要建立系统化的口碑管理机制</li></ul></div></div>
+                  <div class="field"><div class="field-label">Skip when<span class="zh">跳过条件</span></div><div class="field-val"><ul><li>品牌知名度不足以产生规模化的舆情讨论</li></ul></div></div>
+                  <div class="field"><div class="field-label">Inputs<span class="zh">所需输入</span></div><div class="field-val"><ul><li>品牌NPS与大盘对比</li><li>首屏负面率数据</li><li>负面词云</li></ul></div></div>
+                  <div class="field"><div class="field-label">Operations<span class="zh">操作步骤</span></div><div class="field-val"><ol class="steps"><li>追踪品牌关键舆情指标（NPS/首屏负面率/负面高频词等）的变化趋势</li><li>建立舆情管控闭环流程：问题识别监测→正面回应机制→持续舆情维护→正面内容覆盖建设</li><li>梳理高频负面问题并建立标准应对话术库</li><li>设计口碑维护的操作流程、响应时效和团队分工</li></ol></div></div>
+                  <div class="field"><div class="field-label">Page structure<span class="zh">页面表达</span></div><div class="field-val"><p class="muted">暂无页面表达结构（可按操作步骤推导）。</p></div></div>
+                  <div class="field"><div class="field-label">Outputs<span class="zh">预期输出</span></div><div class="field-val"><ul><li>舆情管控体系方案</li></ul></div></div>
+                  <div class="field"><div class="field-label">Failure modes<span class="zh">失效模式</span></div><div class="field-val"><ul><li>舆情监测敏感度阈值设置不当——过敏感导致噪音，过迟钝漏掉关键信号</li></ul></div></div>
+                  <div class="field"><div class="field-label">Boundaries<span class="zh">适用边界</span></div><div class="field-val"><ul><li>舆情监测敏感度阈值设置不当——过敏感导致噪音，过迟钝漏掉关键信号</li></ul></div></div>
+                  <div class="field"><div class="field-label">Evidence<span class="zh">案例证据</span></div><div class="field-val"><p class="muted">未附案例证据说明。</p></div></div>
+                  
+                </div>
+                <div class="idline">
+                  <span>lens_measurement-002</span>
+                  <button class="copybtn" type="button" data-copy="lens_measurement-002">复制 ID</button>
+                  <span>lenses/lens_measurement-002.md · 更新 2026-07-25</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </article></div>
+      </section>
+      <section class="module" id="mod_media-sem" style="--i:9">
+        <header class="module-head">
+          <div class="mod-no">M10</div>
+          <div>
+            <h2>媒体策略与SEM投放</h2>
+            <p class="mod-meta">
+              <span><code>mod_media-sem</code></span>
+              <span>2 个方法</span>
+            </p>
+            <p class="mod-decision">模块「媒体策略与SEM投放」共收录 2 个可复用方法，经跨案例验证和人工审阅。（版本 6.0.0 · 批准 2026-07-27）</p>
+            <ul class="precond"><li>项目需包含与媒体策略与SEM投放相关的分析材料</li><li>分析单元需通过B2分段验证</li></ul>
+          </div>
+        </header>
+        <div class="lenslist">
+        <article class="lens" id="lens_media-sem-001" data-search="搜索关键词分层策略 
+ 如何基于搜索意图设计多层次的关键词矩阵，为每层设定差异化的搜索目标和预算权重？ 
+ 品牌正在进行或计划开始搜索引擎营销 
+ 品类搜索量足够支撑sem的规模效应 
+ 品类搜索量过低导致sem效率不高 
+ 品牌产品线信息 
+ 品类搜索词数据 
+ 消费者搜索行为数据 
+ 平台投放工具 
+ 竞品sem策略参考 
+ 按搜索意图将关键词分层（品牌词/品类词/场景词/竞品词），定义每层的搜索目标和竞价策略 
+ 为每层梳理具体关键词并评估搜索量/竞争度/预估成本 
+ 设计各层关键词与落地页的匹配策略 
+ 按关键词层级分配预算，预估各层效果和整体roi 
+ sem关键词策略 
+ 预算分配方案 
+ 关键词策略基于静态数据——搜索趋势和竞品出价持续变化 
+ 关键词策略基于静态数据——搜索趋势和竞品出价持续变化 
+  
+ 媒体策略与sem投放：如何为品牌设计基于使用场景的媒体投放和搜索关键词策略？... 按消费者使用场景分类建立关键词矩阵 为每个场景设计从兴趣激发到购买转化的投流路径 规划分阶段的投放节奏（测试→验证→放量→收割） 建立投放效果的衡量指标体系 
+ lens_media-sem-001" data-name="搜索关键词分层策略" data-q="如何基于搜索意图设计多层次的关键词矩阵，为每层设定差异化的搜索目标和预算权重？">
+          <button class="lens-head" type="button" aria-expanded="false" aria-controls="lens_media-sem-001-body">
+            <span class="lens-no">26</span>
+            <span class="lens-text">
+              <span class="lens-name">搜索关键词分层策略</span>
+              <span class="lens-q">如何基于搜索意图设计多层次的关键词矩阵，为每层设定差异化的搜索目标和预算权重？</span>
+              <span class="lens-flags"><span class="flag ">已确认</span><span class="flag flag-accent">变体 1</span><span class="flag">4 步</span></span>
+            </span>
+            <span class="toggle-mark" aria-hidden="true"></span>
+          </button>
+          <div class="lens-body" id="lens_media-sem-001-body">
+            <div class="lens-body-inner">
+              <div class="lens-body-content">
+                <div class="fields">
+                  <div class="field"><div class="field-label">Use when<span class="zh">适用条件</span></div><div class="field-val"><ul><li>品牌正在进行或计划开始搜索引擎营销</li><li>品类搜索量足够支撑SEM的规模效应</li></ul></div></div>
+                  <div class="field"><div class="field-label">Skip when<span class="zh">跳过条件</span></div><div class="field-val"><ul><li>品类搜索量过低导致SEM效率不高</li></ul></div></div>
+                  <div class="field"><div class="field-label">Inputs<span class="zh">所需输入</span></div><div class="field-val"><ul><li>品牌产品线信息</li><li>品类搜索词数据</li><li>消费者搜索行为数据</li><li>平台投放工具</li><li>竞品SEM策略参考</li></ul></div></div>
+                  <div class="field"><div class="field-label">Operations<span class="zh">操作步骤</span></div><div class="field-val"><ol class="steps"><li>按搜索意图将关键词分层（品牌词/品类词/场景词/竞品词），定义每层的搜索目标和竞价策略</li><li>为每层梳理具体关键词并评估搜索量/竞争度/预估成本</li><li>设计各层关键词与落地页的匹配策略</li><li>按关键词层级分配预算，预估各层效果和整体ROI</li></ol></div></div>
+                  <div class="field"><div class="field-label">Page structure<span class="zh">页面表达</span></div><div class="field-val"><p class="muted">暂无页面表达结构（可按操作步骤推导）。</p></div></div>
+                  <div class="field"><div class="field-label">Outputs<span class="zh">预期输出</span></div><div class="field-val"><ul><li>SEM关键词策略</li><li>预算分配方案</li></ul></div></div>
+                  <div class="field"><div class="field-label">Failure modes<span class="zh">失效模式</span></div><div class="field-val"><ul><li>关键词策略基于静态数据——搜索趋势和竞品出价持续变化</li></ul></div></div>
+                  <div class="field"><div class="field-label">Boundaries<span class="zh">适用边界</span></div><div class="field-val"><ul><li>关键词策略基于静态数据——搜索趋势和竞品出价持续变化</li></ul></div></div>
+                  <div class="field"><div class="field-label">Evidence<span class="zh">案例证据</span></div><div class="field-val"><p class="muted">未附案例证据说明。</p></div></div>
+                  <div class="field"><div class="field-label">Variant<span class="zh">变体与参考</span></div><div class="field-val"><div class="variants"><div class="variant"><p class="variant-name">媒体策略与SEM投放：如何为品牌设计基于使用场景的媒体投放和搜索关键词策略？...</p><div class="sublabel">适用条件</div><ul><li>品牌需要进行该模块相关的策略分析</li><li>有可获取的相关数据和消费者洞察</li></ul><div class="sublabel">操作步骤</div><ol class="steps"><li>按消费者使用场景分类建立关键词矩阵</li><li>为每个场景设计从兴趣激发到购买转化的投流路径</li><li>规划分阶段的投放节奏（测试→验证→放量→收割）</li><li>建立投放效果的衡量指标体系</li></ol></div></div></div></div>
+                </div>
+                <div class="idline">
+                  <span>lens_media-sem-001</span>
+                  <button class="copybtn" type="button" data-copy="lens_media-sem-001">复制 ID</button>
+                  <span>lenses/lens_media-sem-001.md · 更新 2026-07-27</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </article>
+        <article class="lens" id="lens_media-sem-002" data-search="投流分阶段放量策略（测试→放量→沉淀） 
+ 如何通过分阶段投流策略（小预算测试→验证通过后放量→搜索场收割沉淀），实现投放效率最大化？ 
+ 品牌需要进行分阶段的投放测试和优化放量 
+ 有足够的内容素材可供测试 
+ 品牌只需一次性的固定预算投放 
+ 内容素材（达人笔记/koc笔记等） 
+ 投流工具 
+ 预算分配计划 
+ 人群定向策略 
+ 第一阶段（测试）：用小预算验证不同内容的自然表现和人群反馈，筛选潜力素材 
+ 第二阶段（放量）：对验证通过的内容加大投放，按涟漪模型从核心人群逐层向外扩展受众 
+ 第三阶段（沉淀）：在搜索场和大促场景收割已触达人群，完成转化闭环 
+ 全周期动态调整各渠道（信息流/搜索/达人加热）的预算配比 
+ 分阶段投流方案 
+ 涟漪模型放量节奏依赖平台算法——需持续监控和调整 
+ 涟漪模型放量节奏依赖平台算法——需持续监控和调整 
+  
+ lens_media-sem-002" data-name="投流分阶段放量策略（测试→放量→沉淀）" data-q="如何通过分阶段投流策略（小预算测试→验证通过后放量→搜索场收割沉淀），实现投放效率最大化？">
+          <button class="lens-head" type="button" aria-expanded="false" aria-controls="lens_media-sem-002-body">
+            <span class="lens-no">27</span>
+            <span class="lens-text">
+              <span class="lens-name">投流分阶段放量策略（测试→放量→沉淀）</span>
+              <span class="lens-q">如何通过分阶段投流策略（小预算测试→验证通过后放量→搜索场收割沉淀），实现投放效率最大化？</span>
+              <span class="lens-flags"><span class="flag ">已确认</span><span class="flag">4 步</span></span>
+            </span>
+            <span class="toggle-mark" aria-hidden="true"></span>
+          </button>
+          <div class="lens-body" id="lens_media-sem-002-body">
+            <div class="lens-body-inner">
+              <div class="lens-body-content">
+                <div class="fields">
+                  <div class="field"><div class="field-label">Use when<span class="zh">适用条件</span></div><div class="field-val"><ul><li>品牌需要进行分阶段的投放测试和优化放量</li><li>有足够的内容素材可供测试</li></ul></div></div>
+                  <div class="field"><div class="field-label">Skip when<span class="zh">跳过条件</span></div><div class="field-val"><ul><li>品牌只需一次性的固定预算投放</li></ul></div></div>
+                  <div class="field"><div class="field-label">Inputs<span class="zh">所需输入</span></div><div class="field-val"><ul><li>内容素材（达人笔记/KOC笔记等）</li><li>投流工具</li><li>预算分配计划</li><li>人群定向策略</li></ul></div></div>
+                  <div class="field"><div class="field-label">Operations<span class="zh">操作步骤</span></div><div class="field-val"><ol class="steps"><li>第一阶段（测试）：用小预算验证不同内容的自然表现和人群反馈，筛选潜力素材</li><li>第二阶段（放量）：对验证通过的内容加大投放，按涟漪模型从核心人群逐层向外扩展受众</li><li>第三阶段（沉淀）：在搜索场和大促场景收割已触达人群，完成转化闭环</li><li>全周期动态调整各渠道（信息流/搜索/达人加热）的预算配比</li></ol></div></div>
+                  <div class="field"><div class="field-label">Page structure<span class="zh">页面表达</span></div><div class="field-val"><p class="muted">暂无页面表达结构（可按操作步骤推导）。</p></div></div>
+                  <div class="field"><div class="field-label">Outputs<span class="zh">预期输出</span></div><div class="field-val"><ul><li>分阶段投流方案</li></ul></div></div>
+                  <div class="field"><div class="field-label">Failure modes<span class="zh">失效模式</span></div><div class="field-val"><ul><li>涟漪模型放量节奏依赖平台算法——需持续监控和调整</li></ul></div></div>
+                  <div class="field"><div class="field-label">Boundaries<span class="zh">适用边界</span></div><div class="field-val"><ul><li>涟漪模型放量节奏依赖平台算法——需持续监控和调整</li></ul></div></div>
+                  <div class="field"><div class="field-label">Evidence<span class="zh">案例证据</span></div><div class="field-val"><p class="muted">未附案例证据说明。</p></div></div>
+                  
+                </div>
+                <div class="idline">
+                  <span>lens_media-sem-002</span>
+                  <button class="copybtn" type="button" data-copy="lens_media-sem-002">复制 ID</button>
+                  <span>lenses/lens_media-sem-002.md · 更新 2026-07-27</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </article></div>
+      </section>
+      <section class="module" id="mod_product-value" style="--i:10">
+        <header class="module-head">
+          <div class="mod-no">M11</div>
+          <div>
+            <h2>产品价值与卖点提炼</h2>
+            <p class="mod-meta">
+              <span><code>mod_product-value</code></span>
+              <span>6 个方法</span>
+            </p>
+            <p class="mod-decision">模块「产品价值与卖点提炼」共收录 6 个可复用方法，经跨案例验证和人工审阅。（版本 6.0.0 · 批准 2026-07-27）</p>
+            <ul class="precond"><li>项目需包含与产品价值与卖点提炼相关的分析材料</li><li>分析单元需通过B2分段验证</li></ul>
+          </div>
+        </header>
+        <div class="lenslist">
+        <article class="lens" id="lens_product-value-001" data-search="分消费者群体的产品偏好与产品线规划 
+ 如何基于不同消费者群体（存量用户vs增量用户）的产品偏好差异，针对性地规划产品线以实现增长？ 
+ 需要基于消费者群体差异来规划产品线和定位 
+ 已有不同消费者群体的产品偏好调研数据 
+ 产品线已确定且不需要调整 
+ 存量用户vs增量用户产品偏好调研 
+ 品类相关消费趋势数据 
+ 消费者概念测试反馈 
+ 竞品产品线对标信息 
+ 划分存量用户和增量用户，对比两组在产品形态/功能/价位上的偏好差异 
+ 建立品类的完整定位频谱（从基础功能型到高端享受型），标注品牌当前位置和可扩展方向 
+ 针对增量用户（轻度/流失/潜在）设计降低使用门槛、强化品类价值的产品策略 
+ 针对存量用户按需求亚型设计差异化产品线，规划从入门到高端的完整产品线布局 
+ 产品线规划方案 
+ 消费者声称的需求与实际购买行为可能不一致——需交叉验证 
+ 消费者声称的需求与实际购买行为可能不一致——需交叉验证 
+  
+ 产品价值与卖点提炼：如何为每个运动场景建立消费者痛点×产品科技×功能利益的系统映射？... 列出产品适用的全部运动场景（跑步/骑行/健身房/居家健身操/跳绳/日常跑跳） 为每个场景识别3-5个消费者具体痛点 将品牌产品科技逐项对应到痛点解决方案 为每个解决方案提炼可传播的功能利益点 将全部映射整合为产品核心主张 
+ lens_product-value-001" data-name="分消费者群体的产品偏好与产品线规划" data-q="如何基于不同消费者群体（存量用户vs增量用户）的产品偏好差异，针对性地规划产品线以实现增长？">
+          <button class="lens-head" type="button" aria-expanded="false" aria-controls="lens_product-value-001-body">
+            <span class="lens-no">28</span>
+            <span class="lens-text">
+              <span class="lens-name">分消费者群体的产品偏好与产品线规划</span>
+              <span class="lens-q">如何基于不同消费者群体（存量用户vs增量用户）的产品偏好差异，针对性地规划产品线以实现增长？</span>
+              <span class="lens-flags"><span class="flag ">已确认</span><span class="flag flag-accent">变体 1</span><span class="flag">4 步</span></span>
+            </span>
+            <span class="toggle-mark" aria-hidden="true"></span>
+          </button>
+          <div class="lens-body" id="lens_product-value-001-body">
+            <div class="lens-body-inner">
+              <div class="lens-body-content">
+                <div class="fields">
+                  <div class="field"><div class="field-label">Use when<span class="zh">适用条件</span></div><div class="field-val"><ul><li>需要基于消费者群体差异来规划产品线和定位</li><li>已有不同消费者群体的产品偏好调研数据</li></ul></div></div>
+                  <div class="field"><div class="field-label">Skip when<span class="zh">跳过条件</span></div><div class="field-val"><ul><li>产品线已确定且不需要调整</li></ul></div></div>
+                  <div class="field"><div class="field-label">Inputs<span class="zh">所需输入</span></div><div class="field-val"><ul><li>存量用户vs增量用户产品偏好调研</li><li>品类相关消费趋势数据</li><li>消费者概念测试反馈</li><li>竞品产品线对标信息</li></ul></div></div>
+                  <div class="field"><div class="field-label">Operations<span class="zh">操作步骤</span></div><div class="field-val"><ol class="steps"><li>划分存量用户和增量用户，对比两组在产品形态/功能/价位上的偏好差异</li><li>建立品类的完整定位频谱（从基础功能型到高端享受型），标注品牌当前位置和可扩展方向</li><li>针对增量用户（轻度/流失/潜在）设计降低使用门槛、强化品类价值的产品策略</li><li>针对存量用户按需求亚型设计差异化产品线，规划从入门到高端的完整产品线布局</li></ol></div></div>
+                  <div class="field"><div class="field-label">Page structure<span class="zh">页面表达</span></div><div class="field-val"><p class="muted">暂无页面表达结构（可按操作步骤推导）。</p></div></div>
+                  <div class="field"><div class="field-label">Outputs<span class="zh">预期输出</span></div><div class="field-val"><ul><li>产品线规划方案</li></ul></div></div>
+                  <div class="field"><div class="field-label">Failure modes<span class="zh">失效模式</span></div><div class="field-val"><ul><li>消费者声称的需求与实际购买行为可能不一致——需交叉验证</li></ul></div></div>
+                  <div class="field"><div class="field-label">Boundaries<span class="zh">适用边界</span></div><div class="field-val"><ul><li>消费者声称的需求与实际购买行为可能不一致——需交叉验证</li></ul></div></div>
+                  <div class="field"><div class="field-label">Evidence<span class="zh">案例证据</span></div><div class="field-val"><p class="muted">未附案例证据说明。</p></div></div>
+                  <div class="field"><div class="field-label">Variant<span class="zh">变体与参考</span></div><div class="field-val"><div class="variants"><div class="variant"><p class="variant-name">产品价值与卖点提炼：如何为每个运动场景建立消费者痛点×产品科技×功能利益的系统映射？...</p><div class="sublabel">适用条件</div><ul><li>品牌需要进行该模块相关的策略分析</li><li>有可获取的相关数据和消费者洞察</li></ul><div class="sublabel">操作步骤</div><ol class="steps"><li>列出产品适用的全部运动场景（跑步/骑行/健身房/居家健身操/跳绳/日常跑跳）</li><li>为每个场景识别3-5个消费者具体痛点</li><li>将品牌产品科技逐项对应到痛点解决方案</li><li>为每个解决方案提炼可传播的功能利益点</li><li>将全部映射整合为产品核心主张</li></ol></div><div class="variant"><p class="variant-name">历史推导记录：不同消费群体产品偏好与产品线规划</p><p class="note">recipe_product-value-001</p></div></div></div></div>
+                </div>
+                <div class="idline">
+                  <span>lens_product-value-001</span>
+                  <button class="copybtn" type="button" data-copy="lens_product-value-001">复制 ID</button>
+                  <span>lenses/lens_product-value-001.md · 更新 2026-07-27</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </article>
+        <article class="lens" id="lens_product-value-002" data-search="产品竞争力评估与差异化价值定位 
+ 如何系统评估产品的核心优势和弱点，通过与竞品对比提炼差异化卖点，并经过消费者概念验证后确定品牌价值定位？ 
+ 需要系统评估产品在竞争中的优劣势并提炼差异化价值 
+ 已有消费者对产品的反馈数据和竞品对标信息 
+ 产品尚未上市且无消费者反馈数据 
+ 消费者定性调研/产品反馈 
+ 产品配置信息 
+ 竞品产品参数和卖点信息 
+ 消费者概念测试反馈数据 
+ 从功能/设计/体验/价格/品牌五个维度识别产品的核心优势，诚实评估消费者感知中的关键弱点 
+ 识别品类中所有产品都具备的通用优势（table stakes），与品牌专属优势区分开 
+ 定义消费者最关注的竞争维度，在关键维度上逐项对比本品与竞品 
+ 基于竞争优势提炼可量化或可演示的核心卖点，转化为消费者语言进行概念验证 
+ 基于优劣势分析和概念验证结果，定义产品在品牌体系中的角色和差异化价值主张 
+ 产品竞争力评估报告 
+ 差异化价值定位方案 
+ 功能清单罗列不等于价值提炼——需区分must have基础功能和差异化价值点 
+ 功能清单罗列不等于价值提炼——需区分must have基础功能和差异化价值点 
+  
+ swot驱动版（产品优劣势→品牌角色） 从功能/设计/体验/价格/品牌五个维度识别产品的核心优势，诚实评估消费者感知中的关键弱点 
+ 竞品对比驱动版（参数对比→卖点提炼→概念验证） 从功能/设计/体验/价格/品牌五个维度识别产品的核心优势，诚实评估消费者感知中的关键弱点 
+ 品牌定位驱动版（卖点→品牌定位支撑） 从功能/设计/体验/价格/品牌五个维度识别产品的核心优势，诚实评估消费者感知中的关键弱点 
+ lens_product-value-002" data-name="产品竞争力评估与差异化价值定位" data-q="如何系统评估产品的核心优势和弱点，通过与竞品对比提炼差异化卖点，并经过消费者概念验证后确定品牌价值定位？">
+          <button class="lens-head" type="button" aria-expanded="false" aria-controls="lens_product-value-002-body">
+            <span class="lens-no">29</span>
+            <span class="lens-text">
+              <span class="lens-name">产品竞争力评估与差异化价值定位</span>
+              <span class="lens-q">如何系统评估产品的核心优势和弱点，通过与竞品对比提炼差异化卖点，并经过消费者概念验证后确定品牌价值定位？</span>
+              <span class="lens-flags"><span class="flag ">已确认</span><span class="flag flag-accent">变体 3</span><span class="flag">5 步</span></span>
+            </span>
+            <span class="toggle-mark" aria-hidden="true"></span>
+          </button>
+          <div class="lens-body" id="lens_product-value-002-body">
+            <div class="lens-body-inner">
+              <div class="lens-body-content">
+                <div class="fields">
+                  <div class="field"><div class="field-label">Use when<span class="zh">适用条件</span></div><div class="field-val"><ul><li>需要系统评估产品在竞争中的优劣势并提炼差异化价值</li><li>已有消费者对产品的反馈数据和竞品对标信息</li></ul></div></div>
+                  <div class="field"><div class="field-label">Skip when<span class="zh">跳过条件</span></div><div class="field-val"><ul><li>产品尚未上市且无消费者反馈数据</li></ul></div></div>
+                  <div class="field"><div class="field-label">Inputs<span class="zh">所需输入</span></div><div class="field-val"><ul><li>消费者定性调研/产品反馈</li><li>产品配置信息</li><li>竞品产品参数和卖点信息</li><li>消费者概念测试反馈数据</li></ul></div></div>
+                  <div class="field"><div class="field-label">Operations<span class="zh">操作步骤</span></div><div class="field-val"><ol class="steps"><li>从功能/设计/体验/价格/品牌五个维度识别产品的核心优势，诚实评估消费者感知中的关键弱点</li><li>识别品类中所有产品都具备的通用优势（table stakes），与品牌专属优势区分开</li><li>定义消费者最关注的竞争维度，在关键维度上逐项对比本品与竞品</li><li>基于竞争优势提炼可量化或可演示的核心卖点，转化为消费者语言进行概念验证</li><li>基于优劣势分析和概念验证结果，定义产品在品牌体系中的角色和差异化价值主张</li></ol></div></div>
+                  <div class="field"><div class="field-label">Page structure<span class="zh">页面表达</span></div><div class="field-val"><p class="muted">暂无页面表达结构（可按操作步骤推导）。</p></div></div>
+                  <div class="field"><div class="field-label">Outputs<span class="zh">预期输出</span></div><div class="field-val"><ul><li>产品竞争力评估报告</li><li>差异化价值定位方案</li></ul></div></div>
+                  <div class="field"><div class="field-label">Failure modes<span class="zh">失效模式</span></div><div class="field-val"><ul><li>功能清单罗列不等于价值提炼——需区分Must Have基础功能和差异化价值点</li></ul></div></div>
+                  <div class="field"><div class="field-label">Boundaries<span class="zh">适用边界</span></div><div class="field-val"><ul><li>功能清单罗列不等于价值提炼——需区分Must Have基础功能和差异化价值点</li></ul></div></div>
+                  <div class="field"><div class="field-label">Evidence<span class="zh">案例证据</span></div><div class="field-val"><p class="muted">未附案例证据说明。</p></div></div>
+                  <div class="field"><div class="field-label">Variant<span class="zh">变体与参考</span></div><div class="field-val"><div class="variants"><div class="variant"><p class="variant-name">SWOT驱动版（产品优劣势→品牌角色）</p><div class="sublabel">适用条件</div><ul><li>产品新上市或重新定位，需要先建立基础优劣势认识</li></ul><div class="sublabel">操作步骤</div><ol class="steps"><li>从功能/设计/体验/价格/品牌五个维度识别产品的核心优势，诚实评估消费者感知中的关键弱点</li></ol></div><div class="variant"><p class="variant-name">竞品对比驱动版（参数对比→卖点提炼→概念验证）</p><div class="sublabel">适用条件</div><ul><li>已有清晰的竞争维度定义，需要量化的竞品对比</li></ul><div class="sublabel">操作步骤</div><ol class="steps"><li>从功能/设计/体验/价格/品牌五个维度识别产品的核心优势，诚实评估消费者感知中的关键弱点</li></ol></div><div class="variant"><p class="variant-name">品牌定位驱动版（卖点→品牌定位支撑）</p><div class="sublabel">适用条件</div><ul><li>品牌定位已明确，需确保产品卖点一致支撑品牌定位</li></ul><div class="sublabel">操作步骤</div><ol class="steps"><li>从功能/设计/体验/价格/品牌五个维度识别产品的核心优势，诚实评估消费者感知中的关键弱点</li></ol></div></div></div></div>
+                </div>
+                <div class="idline">
+                  <span>lens_product-value-002</span>
+                  <button class="copybtn" type="button" data-copy="lens_product-value-002">复制 ID</button>
+                  <span>lenses/lens_product-value-002.md · 更新 2026-07-27</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </article>
+        <article class="lens" id="lens_product-value-004" data-search="核心技术跨产品线差异化价值定位 
+ 当品牌拥有可跨产品线使用的核心技术/专利时，如何将该技术在不同产品线上做差异化的价值表达，避免产品线间的自我竞争？ 
+ 品牌拥有可跨多个产品线共享的核心技术或专利 
+ 品牌没有跨产品线共享的核心技术 
+ 核心技术/专利的技术参数 
+ 消费需求金字塔模型 
+ 各产品线的技术规格和定位 
+ 将核心技术拆解为技术参数和消费者可感知的价值维度 
+ 分析技术价值在消费者需求金字塔上的定位：从基础功能需求到高端差异化需求的跨级提升路径 
+ 为不同定位的产品线设计差异化的技术价值表达，确保各产品线间不互相侵蚀 
+ 按使用场景和人群需求区隔不同产品线，确保每个产品线有独立的价值主张和受众 
+ 跨产品线技术价值定位方案 
+ 技术参数直接当作用户利益——需将技术能力转化为消费者可感知的价值 
+ 技术参数直接当作用户利益——需将技术能力转化为消费者可感知的价值 
+  
+ lens_product-value-004" data-name="核心技术跨产品线差异化价值定位" data-q="当品牌拥有可跨产品线使用的核心技术/专利时，如何将该技术在不同产品线上做差异化的价值表达，避免产品线间的自我竞争？">
+          <button class="lens-head" type="button" aria-expanded="false" aria-controls="lens_product-value-004-body">
+            <span class="lens-no">30</span>
+            <span class="lens-text">
+              <span class="lens-name">核心技术跨产品线差异化价值定位</span>
+              <span class="lens-q">当品牌拥有可跨产品线使用的核心技术/专利时，如何将该技术在不同产品线上做差异化的价值表达，避免产品线间的自我竞争？</span>
+              <span class="lens-flags"><span class="flag ">已确认</span><span class="flag">4 步</span></span>
+            </span>
+            <span class="toggle-mark" aria-hidden="true"></span>
+          </button>
+          <div class="lens-body" id="lens_product-value-004-body">
+            <div class="lens-body-inner">
+              <div class="lens-body-content">
+                <div class="fields">
+                  <div class="field"><div class="field-label">Use when<span class="zh">适用条件</span></div><div class="field-val"><ul><li>品牌拥有可跨多个产品线共享的核心技术或专利</li></ul></div></div>
+                  <div class="field"><div class="field-label">Skip when<span class="zh">跳过条件</span></div><div class="field-val"><ul><li>品牌没有跨产品线共享的核心技术</li></ul></div></div>
+                  <div class="field"><div class="field-label">Inputs<span class="zh">所需输入</span></div><div class="field-val"><ul><li>核心技术/专利的技术参数</li><li>消费需求金字塔模型</li><li>各产品线的技术规格和定位</li></ul></div></div>
+                  <div class="field"><div class="field-label">Operations<span class="zh">操作步骤</span></div><div class="field-val"><ol class="steps"><li>将核心技术拆解为技术参数和消费者可感知的价值维度</li><li>分析技术价值在消费者需求金字塔上的定位：从基础功能需求到高端差异化需求的跨级提升路径</li><li>为不同定位的产品线设计差异化的技术价值表达，确保各产品线间不互相侵蚀</li><li>按使用场景和人群需求区隔不同产品线，确保每个产品线有独立的价值主张和受众</li></ol></div></div>
+                  <div class="field"><div class="field-label">Page structure<span class="zh">页面表达</span></div><div class="field-val"><p class="muted">暂无页面表达结构（可按操作步骤推导）。</p></div></div>
+                  <div class="field"><div class="field-label">Outputs<span class="zh">预期输出</span></div><div class="field-val"><ul><li>跨产品线技术价值定位方案</li></ul></div></div>
+                  <div class="field"><div class="field-label">Failure modes<span class="zh">失效模式</span></div><div class="field-val"><ul><li>技术参数直接当作用户利益——需将技术能力转化为消费者可感知的价值</li></ul></div></div>
+                  <div class="field"><div class="field-label">Boundaries<span class="zh">适用边界</span></div><div class="field-val"><ul><li>技术参数直接当作用户利益——需将技术能力转化为消费者可感知的价值</li></ul></div></div>
+                  <div class="field"><div class="field-label">Evidence<span class="zh">案例证据</span></div><div class="field-val"><p class="muted">未附案例证据说明。</p></div></div>
+                  
+                </div>
+                <div class="idline">
+                  <span>lens_product-value-004</span>
+                  <button class="copybtn" type="button" data-copy="lens_product-value-004">复制 ID</button>
+                  <span>lenses/lens_product-value-004.md · 更新 2026-07-27</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </article>
+        <article class="lens" id="lens_product-value-006" data-search="价格段×消费需求×卖点的三层映射分析 
+ 如何通过价格段图谱、消费需求金字塔和卖点差异化三层映射，在品类中找到品牌产品的最佳价格-价值定位？ 
+ 品牌面临多价格段竞争，需要系统理解价格-价值-卖点的对应关系 
+ 已有竞品和自有产品的价格段数据、卖点信息 
+ 品类中价格不是主要竞争维度 
+ 竞品价格段和卖点信息 
+ 消费者需求金字塔模型 
+ 各产品线技术规格和定价 
+ 绘制品类价格段分布图，标注各段的竞品密度和代表品牌 
+ 构建从基础功能需求到高端差异化需求的消费者需求金字塔 
+ 将各品牌的卖点映射到价格×需求矩阵上，识别卖点重叠区和差异化空白区 
+ 基于三层映射，为品牌自身产品线在矩阵中进行定位，提出定价区间和差异化卖点方向 
+ 价格-需求-卖点映射矩阵 
+ 品牌定价与卖点策略建议 
+ 只画矩阵不解释坐标和证据——每个定位必须由消费者认知数据支撑 
+ 只画矩阵不解释坐标和证据——每个定位必须由消费者认知数据支撑 
+  
+ 自有产品定位版 绘制品类价格段分布图，标注各段的竞品密度和代表品牌 
+ 竞品定位扫描版 绘制品类价格段分布图，标注各段的竞品密度和代表品牌 
+ lens_product-value-006" data-name="价格段×消费需求×卖点的三层映射分析" data-q="如何通过价格段图谱、消费需求金字塔和卖点差异化三层映射，在品类中找到品牌产品的最佳价格-价值定位？">
+          <button class="lens-head" type="button" aria-expanded="false" aria-controls="lens_product-value-006-body">
+            <span class="lens-no">31</span>
+            <span class="lens-text">
+              <span class="lens-name">价格段×消费需求×卖点的三层映射分析</span>
+              <span class="lens-q">如何通过价格段图谱、消费需求金字塔和卖点差异化三层映射，在品类中找到品牌产品的最佳价格-价值定位？</span>
+              <span class="lens-flags"><span class="flag ">已确认</span><span class="flag flag-accent">变体 2</span><span class="flag">4 步</span></span>
+            </span>
+            <span class="toggle-mark" aria-hidden="true"></span>
+          </button>
+          <div class="lens-body" id="lens_product-value-006-body">
+            <div class="lens-body-inner">
+              <div class="lens-body-content">
+                <div class="fields">
+                  <div class="field"><div class="field-label">Use when<span class="zh">适用条件</span></div><div class="field-val"><ul><li>品牌面临多价格段竞争，需要系统理解价格-价值-卖点的对应关系</li><li>已有竞品和自有产品的价格段数据、卖点信息</li></ul></div></div>
+                  <div class="field"><div class="field-label">Skip when<span class="zh">跳过条件</span></div><div class="field-val"><ul><li>品类中价格不是主要竞争维度</li></ul></div></div>
+                  <div class="field"><div class="field-label">Inputs<span class="zh">所需输入</span></div><div class="field-val"><ul><li>竞品价格段和卖点信息</li><li>消费者需求金字塔模型</li><li>各产品线技术规格和定价</li></ul></div></div>
+                  <div class="field"><div class="field-label">Operations<span class="zh">操作步骤</span></div><div class="field-val"><ol class="steps"><li>绘制品类价格段分布图，标注各段的竞品密度和代表品牌</li><li>构建从基础功能需求到高端差异化需求的消费者需求金字塔</li><li>将各品牌的卖点映射到价格×需求矩阵上，识别卖点重叠区和差异化空白区</li><li>基于三层映射，为品牌自身产品线在矩阵中进行定位，提出定价区间和差异化卖点方向</li></ol></div></div>
+                  <div class="field"><div class="field-label">Page structure<span class="zh">页面表达</span></div><div class="field-val"><p class="muted">暂无页面表达结构（可按操作步骤推导）。</p></div></div>
+                  <div class="field"><div class="field-label">Outputs<span class="zh">预期输出</span></div><div class="field-val"><ul><li>价格-需求-卖点映射矩阵</li><li>品牌定价与卖点策略建议</li></ul></div></div>
+                  <div class="field"><div class="field-label">Failure modes<span class="zh">失效模式</span></div><div class="field-val"><ul><li>只画矩阵不解释坐标和证据——每个定位必须由消费者认知数据支撑</li></ul></div></div>
+                  <div class="field"><div class="field-label">Boundaries<span class="zh">适用边界</span></div><div class="field-val"><ul><li>只画矩阵不解释坐标和证据——每个定位必须由消费者认知数据支撑</li></ul></div></div>
+                  <div class="field"><div class="field-label">Evidence<span class="zh">案例证据</span></div><div class="field-val"><p class="muted">未附案例证据说明。</p></div></div>
+                  <div class="field"><div class="field-label">Variant<span class="zh">变体与参考</span></div><div class="field-val"><div class="variants"><div class="variant"><p class="variant-name">自有产品定位版</p><div class="sublabel">适用条件</div><ul><li>为品牌自身产品线寻找最佳价格-价值定位</li></ul><div class="sublabel">操作步骤</div><ol class="steps"><li>绘制品类价格段分布图，标注各段的竞品密度和代表品牌</li></ol></div><div class="variant"><p class="variant-name">竞品定位扫描版</p><div class="sublabel">适用条件</div><ul><li>扫描竞品在价格-价值矩阵中的分布，寻找定位空白</li></ul><div class="sublabel">操作步骤</div><ol class="steps"><li>绘制品类价格段分布图，标注各段的竞品密度和代表品牌</li></ol></div></div></div></div>
+                </div>
+                <div class="idline">
+                  <span>lens_product-value-006</span>
+                  <button class="copybtn" type="button" data-copy="lens_product-value-006">复制 ID</button>
+                  <span>lenses/lens_product-value-006.md · 更新 2026-07-27</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </article>
+        <article class="lens" id="lens_product-value-007" data-search="核心成分/原料功效图谱→产品痛点→产品概念开发 
+ 如何建立从核心成分/原料功效出发，经过消费者使用痛点诊断，最终开发出针对不同人群的产品概念的完整流程？ 
+ 产品开发中，核心成分/原料/技术是产品价值的核心载体 
+ 产品价值不依赖核心成分/原料 
+ 核心成分/原料的功效与配方组合数据 
+ 社交媒体/电商平台消费者痛点数据 
+ 消费者人群需求信息 
+ 步骤一：构建核心成分与不同配方组合的功效匹配关系图谱 
+ 步骤二：分析消费者使用痛点、舆情数据和销售趋势，识别产品改进方向 
+ 步骤三：将不同人群的需求与配方能力匹配，按人群设计差异化产品概念并分类输出 
+ 产品概念开发方案 
+ 成分功效→产品概念的直接转化忽略了消费者接受度——需在概念阶段加入消费者验证 
+ 成分功效→产品概念的直接转化忽略了消费者接受度——需在概念阶段加入消费者验证 
+  
+ lens_product-value-007" data-name="核心成分/原料功效图谱→产品痛点→产品概念开发" data-q="如何建立从核心成分/原料功效出发，经过消费者使用痛点诊断，最终开发出针对不同人群的产品概念的完整流程？">
+          <button class="lens-head" type="button" aria-expanded="false" aria-controls="lens_product-value-007-body">
+            <span class="lens-no">32</span>
+            <span class="lens-text">
+              <span class="lens-name">核心成分/原料功效图谱→产品痛点→产品概念开发</span>
+              <span class="lens-q">如何建立从核心成分/原料功效出发，经过消费者使用痛点诊断，最终开发出针对不同人群的产品概念的完整流程？</span>
+              <span class="lens-flags"><span class="flag ">已确认</span><span class="flag">3 步</span></span>
+            </span>
+            <span class="toggle-mark" aria-hidden="true"></span>
+          </button>
+          <div class="lens-body" id="lens_product-value-007-body">
+            <div class="lens-body-inner">
+              <div class="lens-body-content">
+                <div class="fields">
+                  <div class="field"><div class="field-label">Use when<span class="zh">适用条件</span></div><div class="field-val"><ul><li>产品开发中，核心成分/原料/技术是产品价值的核心载体</li></ul></div></div>
+                  <div class="field"><div class="field-label">Skip when<span class="zh">跳过条件</span></div><div class="field-val"><ul><li>产品价值不依赖核心成分/原料</li></ul></div></div>
+                  <div class="field"><div class="field-label">Inputs<span class="zh">所需输入</span></div><div class="field-val"><ul><li>核心成分/原料的功效与配方组合数据</li><li>社交媒体/电商平台消费者痛点数据</li><li>消费者人群需求信息</li></ul></div></div>
+                  <div class="field"><div class="field-label">Operations<span class="zh">操作步骤</span></div><div class="field-val"><ol class="steps"><li>步骤一：构建核心成分与不同配方组合的功效匹配关系图谱</li><li>步骤二：分析消费者使用痛点、舆情数据和销售趋势，识别产品改进方向</li><li>步骤三：将不同人群的需求与配方能力匹配，按人群设计差异化产品概念并分类输出</li></ol></div></div>
+                  <div class="field"><div class="field-label">Page structure<span class="zh">页面表达</span></div><div class="field-val"><p class="muted">暂无页面表达结构（可按操作步骤推导）。</p></div></div>
+                  <div class="field"><div class="field-label">Outputs<span class="zh">预期输出</span></div><div class="field-val"><ul><li>产品概念开发方案</li></ul></div></div>
+                  <div class="field"><div class="field-label">Failure modes<span class="zh">失效模式</span></div><div class="field-val"><ul><li>成分功效→产品概念的直接转化忽略了消费者接受度——需在概念阶段加入消费者验证</li></ul></div></div>
+                  <div class="field"><div class="field-label">Boundaries<span class="zh">适用边界</span></div><div class="field-val"><ul><li>成分功效→产品概念的直接转化忽略了消费者接受度——需在概念阶段加入消费者验证</li></ul></div></div>
+                  <div class="field"><div class="field-label">Evidence<span class="zh">案例证据</span></div><div class="field-val"><p class="muted">未附案例证据说明。</p></div></div>
+                  <div class="field"><div class="field-label">Variant<span class="zh">变体与参考</span></div><div class="field-val"><div class="variants"><div class="variant"><p class="variant-name">历史推导记录：核心原料功效图谱→产品痛点诊断→产品概念开发</p><p class="note">recipe_product-value-007</p></div></div></div></div>
+                </div>
+                <div class="idline">
+                  <span>lens_product-value-007</span>
+                  <button class="copybtn" type="button" data-copy="lens_product-value-007">复制 ID</button>
+                  <span>lenses/lens_product-value-007.md · 更新 2026-07-27</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </article>
+        <article class="lens" id="lens_product-value-010" data-search="产品功能-风格双维度价值评估框架 
+ 当产品价值由功能属性和风格/设计属性共同决定时，如何构建功能×风格双维度需求矩阵，按消费者偏好标注优先级，并跨品类提炼可复用的评估框架？ 
+ 产品品类中功能属性和风格/设计属性对消费者决策都重要 
+ 已有消费者fgd或访谈数据 
+ 品类中风格/设计属性对购买决策不重要 
+ 消费者fgd/访谈数据（含功能需求和风格偏好原话） 
+ 产品品类定义 
+ 功能属性评估维度 
+ 风格属性评估维度 
+ 按产品品类分别提取功能属性清单（如防护/舒适/便携/耐用等及其子维度）和风格/设计属性清单（如版型/颜色/材质/设计元素等） 
+ 在每个维度下整理消费者偏好，按must have（基础门槛）和better to have（差异化加分）两级标注优先级 
+ 构建功能×风格双维度的完整需求矩阵，在每个交叉点上标注消费者证据和优先级 
+ 识别跨品类的通用评估模式（可复用框架）与品类特定的差异化调整 
+ 产品功能-风格需求矩阵 
+ 消费者偏好优先级排序 
+ 品类设计指导方向 
+ 功能清单罗列不等于价值提炼——需区分基础门槛功能和差异化加分功能 
+ 功能清单罗列不等于价值提炼——需区分基础门槛功能和差异化加分功能 
+  
+ 基础版（品类特定需求梳理） 按产品品类分别提取功能属性清单（如防护/舒适/便携/耐用等及其子维度）和风格/设计属性清单（如版型/颜色/材质/设计元素等） 
+ 优先级版（must have vs better to have） 按产品品类分别提取功能属性清单（如防护/舒适/便携/耐用等及其子维度）和风格/设计属性清单（如版型/颜色/材质/设计元素等） 
+ 跨品类通用版 按产品品类分别提取功能属性清单（如防护/舒适/便携/耐用等及其子维度）和风格/设计属性清单（如版型/颜色/材质/设计元素等） 
+ lens_product-value-010" data-name="产品功能-风格双维度价值评估框架" data-q="当产品价值由功能属性和风格/设计属性共同决定时，如何构建功能×风格双维度需求矩阵，按消费者偏好标注优先级，并跨品类提炼可复用的评估框架？">
+          <button class="lens-head" type="button" aria-expanded="false" aria-controls="lens_product-value-010-body">
+            <span class="lens-no">33</span>
+            <span class="lens-text">
+              <span class="lens-name">产品功能-风格双维度价值评估框架</span>
+              <span class="lens-q">当产品价值由功能属性和风格/设计属性共同决定时，如何构建功能×风格双维度需求矩阵，按消费者偏好标注优先级，并跨品类提炼可复用的评估框架？</span>
+              <span class="lens-flags"><span class="flag ">已确认</span><span class="flag flag-accent">变体 3</span><span class="flag">4 步</span></span>
+            </span>
+            <span class="toggle-mark" aria-hidden="true"></span>
+          </button>
+          <div class="lens-body" id="lens_product-value-010-body">
+            <div class="lens-body-inner">
+              <div class="lens-body-content">
+                <div class="fields">
+                  <div class="field"><div class="field-label">Use when<span class="zh">适用条件</span></div><div class="field-val"><ul><li>产品品类中功能属性和风格/设计属性对消费者决策都重要</li><li>已有消费者FGD或访谈数据</li></ul></div></div>
+                  <div class="field"><div class="field-label">Skip when<span class="zh">跳过条件</span></div><div class="field-val"><ul><li>品类中风格/设计属性对购买决策不重要</li></ul></div></div>
+                  <div class="field"><div class="field-label">Inputs<span class="zh">所需输入</span></div><div class="field-val"><ul><li>消费者FGD/访谈数据（含功能需求和风格偏好原话）</li><li>产品品类定义</li><li>功能属性评估维度</li><li>风格属性评估维度</li></ul></div></div>
+                  <div class="field"><div class="field-label">Operations<span class="zh">操作步骤</span></div><div class="field-val"><ol class="steps"><li>按产品品类分别提取功能属性清单（如防护/舒适/便携/耐用等及其子维度）和风格/设计属性清单（如版型/颜色/材质/设计元素等）</li><li>在每个维度下整理消费者偏好，按Must Have（基础门槛）和Better to Have（差异化加分）两级标注优先级</li><li>构建功能×风格双维度的完整需求矩阵，在每个交叉点上标注消费者证据和优先级</li><li>识别跨品类的通用评估模式（可复用框架）与品类特定的差异化调整</li></ol></div></div>
+                  <div class="field"><div class="field-label">Page structure<span class="zh">页面表达</span></div><div class="field-val"><p class="muted">暂无页面表达结构（可按操作步骤推导）。</p></div></div>
+                  <div class="field"><div class="field-label">Outputs<span class="zh">预期输出</span></div><div class="field-val"><ul><li>产品功能-风格需求矩阵</li><li>消费者偏好优先级排序</li><li>品类设计指导方向</li></ul></div></div>
+                  <div class="field"><div class="field-label">Failure modes<span class="zh">失效模式</span></div><div class="field-val"><ul><li>功能清单罗列不等于价值提炼——需区分基础门槛功能和差异化加分功能</li></ul></div></div>
+                  <div class="field"><div class="field-label">Boundaries<span class="zh">适用边界</span></div><div class="field-val"><ul><li>功能清单罗列不等于价值提炼——需区分基础门槛功能和差异化加分功能</li></ul></div></div>
+                  <div class="field"><div class="field-label">Evidence<span class="zh">案例证据</span></div><div class="field-val"><p class="muted">未附案例证据说明。</p></div></div>
+                  <div class="field"><div class="field-label">Variant<span class="zh">变体与参考</span></div><div class="field-val"><div class="variants"><div class="variant"><p class="variant-name">基础版（品类特定需求梳理）</p><div class="sublabel">适用条件</div><ul><li>首次在某品类应用该框架</li></ul><div class="sublabel">操作步骤</div><ol class="steps"><li>按产品品类分别提取功能属性清单（如防护/舒适/便携/耐用等及其子维度）和风格/设计属性清单（如版型/颜色/材质/设计元素等）</li></ol></div><div class="variant"><p class="variant-name">优先级版（Must Have vs Better to Have）</p><div class="sublabel">适用条件</div><ul><li>资源受限，需要功能优先级取舍</li></ul><div class="sublabel">操作步骤</div><ol class="steps"><li>按产品品类分别提取功能属性清单（如防护/舒适/便携/耐用等及其子维度）和风格/设计属性清单（如版型/颜色/材质/设计元素等）</li></ol></div><div class="variant"><p class="variant-name">跨品类通用版</p><div class="sublabel">适用条件</div><ul><li>需要在多个品类上统一应用评估框架</li></ul><div class="sublabel">操作步骤</div><ol class="steps"><li>按产品品类分别提取功能属性清单（如防护/舒适/便携/耐用等及其子维度）和风格/设计属性清单（如版型/颜色/材质/设计元素等）</li></ol></div><div class="variant"><p class="variant-name">历史推导记录：Burton户外产品功能-风格价值评估框架</p><p class="note">recipe_product-value-010</p></div></div></div></div>
+                </div>
+                <div class="idline">
+                  <span>lens_product-value-010</span>
+                  <button class="copybtn" type="button" data-copy="lens_product-value-010">复制 ID</button>
+                  <span>lenses/lens_product-value-010.md · 更新 2026-07-27</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </article></div>
+      </section>
+
+      <div class="empty-state">
+        <p>没有匹配 <b>「<span id="empty-query"></span>」</b> 的条目。</p>
+        <p class="muted">试试方法名称、判断问题或输入输出的关键词，例如「定位」「预算」「消费者反馈」。</p>
+      </div>
+
+      <footer class="footer">
+        <p>
+          <strong>Planners Method Wiki</strong><br>
+          Markdown 真源 · 页面生成 2026.11.21 · 指纹 5a0ee441271331e2
+        </p>
+        <p>
+          <strong>ORIGIN</strong><br>
+          方法库由阿祖不看 TVC 创建与维护 · demyth.info<br>
+          改动方法页（lenses/*.md）后重新运行 build-wiki-viewer.mjs 即可更新。
+        </p>
+      </footer>
+    </main>
+  </div>
+
+<script>
+/* Planners Method Wiki — 阅读器交互 */
+(function () {
+  "use strict";
+
+  var search = document.getElementById("search");
+  var searchWrap = document.querySelector(".search-wrap");
+  var searchCount = document.querySelector(".search-count");
+  var emptyState = document.querySelector(".empty-state");
+  var expandAllBtn = document.getElementById("expand-all");
+  var collapseAllBtn = document.getElementById("collapse-all");
+  var lenses = Array.prototype.slice.call(document.querySelectorAll(".lens"));
+  var modules = Array.prototype.slice.call(document.querySelectorAll(".module"));
+  var navlinks = Array.prototype.slice.call(document.querySelectorAll(".navlink"));
+
+  /* ---------- 展开 / 收起 ---------- */
+
+  function setOpen(lens, open, auto) {
+    lens.classList.toggle("is-open", open);
+    var head = lens.querySelector(".lens-head");
+    if (head) head.setAttribute("aria-expanded", open ? "true" : "false");
+    if (auto) lens.classList.toggle("is-auto-open", open);
+    else lens.classList.remove("is-auto-open");
+    expandAllBtn.setAttribute("aria-pressed", "false");
+  }
+
+  lenses.forEach(function (lens) {
+    var head = lens.querySelector(".lens-head");
+    head.addEventListener("click", function () {
+      setOpen(lens, !lens.classList.contains("is-open"), false);
+    });
+  });
+
+  expandAllBtn.addEventListener("click", function () {
+    lenses.forEach(function (lens) {
+      if (!lens.classList.contains("is-filtered")) setOpen(lens, true, false);
+    });
+    expandAllBtn.setAttribute("aria-pressed", "true");
+    collapseAllBtn.setAttribute("aria-pressed", "false");
+  });
+
+  collapseAllBtn.addEventListener("click", function () {
+    lenses.forEach(function (lens) {
+      setOpen(lens, false, false);
+    });
+    collapseAllBtn.setAttribute("aria-pressed", "true");
+    expandAllBtn.setAttribute("aria-pressed", "false");
+  });
+
+  /* ---------- 搜索 ---------- */
+
+  function escapeHtml(s) {
+    return s.replace(/[&<>"]/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c];
+    });
+  }
+
+  function highlight(el, text, query) {
+    if (!el) return;
+    if (!query) {
+      el.innerHTML = escapeHtml(text);
+      return;
+    }
+    var lower = text.toLowerCase();
+    var q = query.toLowerCase();
+    var out = "";
+    var i = 0;
+    var idx = lower.indexOf(q);
+    while (idx !== -1) {
+      out += escapeHtml(text.slice(i, idx));
+      out += "<mark>" + escapeHtml(text.slice(idx, idx + q.length)) + "</mark>";
+      i = idx + q.length;
+      idx = lower.indexOf(q, i);
+    }
+    out += escapeHtml(text.slice(i));
+    el.innerHTML = out;
+  }
+
+  function runSearch() {
+    var raw = search.value.trim();
+    var q = raw.toLowerCase();
+    searchWrap.classList.toggle("has-value", raw.length > 0);
+    document.body.classList.toggle("is-searching", raw.length > 0);
+    var visible = 0;
+
+    lenses.forEach(function (lens) {
+      var hay = lens.getAttribute("data-search") || "";
+      var hit = !q || hay.indexOf(q) !== -1;
+      lens.classList.toggle("is-filtered", !hit);
+      if (hit) {
+        visible += 1;
+        if (q) {
+          highlight(lens.querySelector(".lens-name"), lens.getAttribute("data-name") || "", raw);
+          highlight(lens.querySelector(".lens-q"), lens.getAttribute("data-q") || "", raw);
+          if (!lens.classList.contains("is-open")) setOpen(lens, true, true);
+        } else {
+          highlight(lens.querySelector(".lens-name"), lens.getAttribute("data-name") || "", "");
+          highlight(lens.querySelector(".lens-q"), lens.getAttribute("data-q") || "", "");
+          if (lens.classList.contains("is-auto-open")) setOpen(lens, false, false);
+        }
+      }
+    });
+
+    modules.forEach(function (mod) {
+      var any = mod.querySelector(".lens:not(.is-filtered)");
+      mod.classList.toggle("is-hidden", !any);
+    });
+
+    if (q) {
+      searchCount.textContent = visible + " / " + lenses.length;
+    } else {
+      searchCount.textContent = "";
+    }
+    var emptyQuery = document.getElementById("empty-query");
+    if (emptyQuery) emptyQuery.textContent = raw;
+    emptyState.classList.toggle("is-visible", visible === 0);
+
+    navlinks.forEach(function (link) {
+      var target = document.getElementById(link.getAttribute("data-target"));
+      link.style.opacity = target && target.classList.contains("is-hidden") ? "0.35" : "";
+    });
+  }
+
+  search.addEventListener("input", runSearch);
+  search.addEventListener("keydown", function (e) {
+    if (e.key === "Enter") {
+      var first = document.querySelector(".lens:not(.is-filtered)");
+      if (first) {
+        var mod = first.closest(".module");
+        if (mod) window.scrollTo({ top: mod.offsetTop - 80, behavior: "smooth" });
+      }
+    }
+    if (e.key === "Escape") {
+      search.value = "";
+      runSearch();
+      search.blur();
+    }
+  });
+
+  document.addEventListener("keydown", function (e) {
+    var tag = (e.target.tagName || "").toLowerCase();
+    if (tag === "input" || tag === "textarea") return;
+    if (e.key === "/" || (e.key === "k" && (e.metaKey || e.ctrlKey))) {
+      e.preventDefault();
+      search.focus();
+      search.select();
+    }
+    if (e.key === "Escape") {
+      lenses.forEach(function (lens) {
+        if (lens.classList.contains("is-open")) setOpen(lens, false, false);
+      });
+    }
+  });
+
+  /* ---------- 目录高亮 ---------- */
+
+  var ticking = false;
+  function updateActive() {
+    ticking = false;
+    var anchor = window.scrollY + 140;
+    var current = null;
+    modules.forEach(function (mod) {
+      if (!mod.classList.contains("is-hidden") && mod.offsetTop <= anchor) current = mod;
+    });
+    if (!current) current = modules.filter(function (m) { return !m.classList.contains("is-hidden"); })[0] || null;
+    navlinks.forEach(function (link) {
+      var target = document.getElementById(link.getAttribute("data-target"));
+      link.classList.toggle("is-active", !!current && target === current);
+    });
+  }
+
+  window.addEventListener(
+    "scroll",
+    function () {
+      if (!ticking) {
+        ticking = true;
+        window.requestAnimationFrame(updateActive);
+      }
+    },
+    { passive: true }
+  );
+
+  navlinks.forEach(function (link) {
+    link.addEventListener("click", function (e) {
+      e.preventDefault();
+      if (search.value.trim()) {
+        search.value = "";
+        runSearch();
+      }
+      var target = document.getElementById(link.getAttribute("data-target"));
+      if (target) {
+        target.scrollIntoView({ behavior: "smooth", block: "start" });
+        history.replaceState(null, "", "#" + target.id);
+      }
+    });
+  });
+
+  /* ---------- 复制 ID ---------- */
+
+  document.querySelectorAll(".copybtn").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var value = btn.getAttribute("data-copy") || "";
+      var done = function () {
+        var old = btn.textContent;
+        btn.textContent = "已复制";
+        btn.classList.add("is-done");
+        setTimeout(function () {
+          btn.textContent = old;
+          btn.classList.remove("is-done");
+        }, 1400);
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(value).then(done, done);
+      } else {
+        var ta = document.createElement("textarea");
+        ta.value = value;
+        document.body.appendChild(ta);
+        ta.select();
+        try {
+          document.execCommand("copy");
+        } catch (err) {}
+        document.body.removeChild(ta);
+        done();
+      }
+    });
+  });
+
+  /* ---------- 深链 ---------- */
+
+  function openHash() {
+    var id = decodeURIComponent(window.location.hash.replace(/^#/, ""));
+    if (!id) return;
+    var el = document.getElementById(id);
+    if (!el) return;
+    if (el.classList.contains("lens")) {
+      setOpen(el, true, false);
+      setTimeout(function () {
+        el.scrollIntoView({ block: "start" });
+      }, 60);
+    } else {
+      el.scrollIntoView({ block: "start" });
+    }
+  }
+
+  window.addEventListener("hashchange", openHash);
+
+  /* ---------- 初始化 ---------- */
+
+  updateActive();
+  if (window.location.hash) {
+    setTimeout(openHash, 120);
+  }
+})();
+
+</script>
+</body>
+</html>
