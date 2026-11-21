@@ -44,7 +44,7 @@ node scripts/build-wiki-viewer.mjs
 ## 在生态里的位置
 
 - **独立使用**：随时查策略方法、补充新结案沉淀、构建与分享团队离线版方法阅读页。
-- **被 [Planners Proposal](https://github.com/thePlannerIvan/Planners-Proposal-System) 调用**：发散与校验策略判断角度，辅助收敛 `storyline.md`。
+- **被 [Planners Proposal](https://github.com/thePlannerIvan/planners-proposal) 调用**：发散与校验策略判断角度，辅助收敛 `storyline.md`。
 - **被 [Planners Bypage](https://github.com/thePlannerIvan/planners-bypage) 调用**：读取方法里的 `## 页面表达结构`，指导每一页先讲什么、需要什么证据。
 - **被 [Video Idea System](https://github.com/thePlannerIvan/video-idea-system) 调用**：通过 `query-wiki.mjs` 调取营销分析框架。
 
